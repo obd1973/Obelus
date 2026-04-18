@@ -26,4 +26,4 @@ Distributed under the **MIT License**.
 *Note: This is an independent project and is not affiliated with, endorsed by, or an official product of any retail platform mentioned. Use of this tool does not guarantee invoice acceptance by the SDI or the recipient.*
 
 ---
-**Maintained by [Your Name]**
+**Maintained by [Oscar Bares]**
