@@ -452,7 +452,7 @@
                 }
             }
 
-            // 5. Project Razorbill: PO Header Check
+            // 5. PO Header Check
             const poNodes = xml.getElementsByTagName('DatiOrdineAcquisto');
             if (poNodes.length > 0) {
                 let poFound = false;
@@ -472,7 +472,7 @@
                 addAutoCheck('fail', 'PO Header Structure', 'CRITICAL: <DatiOrdineAcquisto> is missing. Amazon OFA will place this on hold until 2030.');
             }
 
-            // 6. Project Razorbill: Line Item Description Scan (The Anti-Pattern)
+            // 6. Line Item Description Scan (The Anti-Pattern)
             const lines = xml.getElementsByTagName('DettaglioLinee');
             let buriedPOFound = false;
             let zeroValueLines = 0;
