@@ -1,7 +1,6 @@
-# Obelus (ὀβελός) 🛡️
-**Tactical SDI Invoice Validator for Amazon Vendors**
+🇮🇹 [Leggi in italiano](README_IT.md)
 
-## Why this exists
+# Obelus 1.0 — Amazon Invoice Validator
 
 In Italy, invoicing is often one person's job.
 
@@ -13,81 +12,141 @@ By the time a vendor realizes something is wrong, weeks have passed. Sometimes m
 
 Obelus was built to close that gap before it opens.
 
-It checks both SDI requirements and Amazon's specific formatting rules locally, instantly, before a single invoice is submitted. No IT roadmap. No installation. No data leaving your machine.
+It checks Amazon's specific formatting and routing requirements locally, instantly, before a single invoice is submitted. No IT roadmap. No installation. No data leaving your machine.
 
-It won't replace judgment. But it will tell you what to check before you find out the hard way.
-
----
-
-## What it does
-
-Obelus is a single-file HTML validation engine. You open it in a browser, drop in an XML invoice file, and it runs two types of checks:
-
-**Automated checks** — things the tool can verify directly from the XML:
-- Amazon entity name exact match
-- Amazon VAT number
-- SDI recipient code validity (Retail, Dropship, Advantage)
-- Document type detection and structural routing rules
-- Purchase Order presence and correct XML placement
-- Line item scan for misplaced PO references
-- Zero-value informational line detection
-
-**Manual verification prompts** — things that require a human check against Vendor Central:
-- Purchase Order number extracted and flagged for confirmation
-- Full item list with ASIN/EAN codes and quantities for cross-reference
-
-The tool surfaces all issues at once, not one at a time. That matters. Finding errors sequentially can add weeks to a resolution. Obelus shows the full picture in one pass.
+It won't replace judgment. But it will tell you exactly what to verify before you find out the hard way.
 
 ---
 
-## How to use it
+## What It Does
 
-1. Download `Obelus0_1.html`
-2. Open it in Chrome or Edge
-3. Drop your XML invoice file into the upload zone
-4. Review automated checks on the left and manual verification prompts on the right
+Obelus is a single-file HTML validation engine. Open it in any browser, drop in one or more XML invoice files, and it runs two layers of checks.
 
-No installation. No account. No internet connection required.
+### Automated Header Checks
+
+Each check returns a clear status (PASS / FAIL / WARN) with the extracted value and, for any failure, a specific resolution instruction pointing to the exact XML field to fix.
+
+- **Invoice Number** — presence and uniqueness within a batch
+- **SDI Recipient Code** (`CodiceDestinatario`) — validated against Amazon's known codes for Retail, Dropship, and Advantage channels
+- **PEC Address** — checked against Amazon's registered legal mail address
+- **Entity Name** — exact match against the required Amazon EU entity name
+- **VAT Number** — country prefix and fiscal code verified against Amazon's Italian VAT registration
+- **Document Type** — accepted types: TD01, TD04, TD05, TD24, TD25
+- **Total Amount** — presence and numeric validity
+
+### OFA Routing Checks (Credit/Debit Notes — TD04/TD05)
+
+- **Linked Document** (`DatiFattureCollegate`) — checks that the original invoice reference is present, required for OFA auto-clearing
+- **Causale Code** — validates the reason code against accepted values (PQV, PPV, QPD)
+
+### Batch-Level Checks (Multi-file mode)
+
+- **Duplicate Invoice Numbers** — flags any invoice number appearing more than once in the batch
+- **Amount Matching** — pairs each TD04/TD05 with its original invoice and verifies the totals match
+
+### Line-Item Analysis
+
+For every line in the invoice the tool extracts and displays:
+
+- **Description** — the line item description from `<Descrizione>`
+- **ASIN / EAN / Product Code** — extracted from `<CodiceArticolo>`, with code type shown (ASIN, EAN, etc.)
+- **PO Reference** — extracted from `<DatiOrdineAcquisto>` at document level and from line-level product codes where present
+- **VAT Rate** — from `<AliquotaIVA>`
+- **Discount** — from `<ScontoMaggiorazione>`, percentage or amount
+
+### Manual Verification Panel
+
+Because the tool cannot access Vendor Central, two things always require a human check. After validation the tool surfaces these explicitly in a dedicated panel — not buried in the results:
+
+- **Purchase Order(s) found** — the PO numbers extracted from the XML, with an instruction to confirm they are open and correct in Vendor Central before submitting
+- **ASIN / EAN codes found** — all product codes extracted from the XML, with an instruction to cross-check each against the active catalog in Vendor Central
+
+The tool shows you what it found. You confirm it is right.
 
 ---
 
-## Privacy & data handling
+## What It Does Not Do
 
-All validation logic runs entirely in your browser. Your invoice file is never uploaded, transmitted, or stored anywhere outside your local machine.
-
-The only data stored locally is a usage counter saved in your browser's localStorage. This counter tracks how many invoices you have validated and triggers a feedback prompt at 10 and 50 validations. It contains no invoice data. You can clear it at any time by clearing your browser's site data.
+Obelus validates Amazon's formatting and routing requirements. It does not perform deep SDI schema validation (XSD compliance, digital signature verification, or transmission envelope checks). Those are handled by the SDI system itself and by compliant invoicing software upstream.
 
 ---
 
-## What it cannot check
+## Validation History
 
-Two things require human verification and cannot be validated locally:
+Every invoice checked is automatically logged to a local history. Click the **History** button in the header to view a timestamped record of all validations on this machine, including invoice number, document type, PO numbers, ASIN/EAN codes, and overall result.
 
-- **Purchase Order validity** — whether the PO exists, is open, and matches the invoice amount in Vendor Central
-- **ASIN/EAN accuracy** — whether the item codes and quantities match what Amazon expects on that specific order
-
-Obelus extracts both and presents them clearly for manual review. It tells you what to look at. The verification itself is yours.
+The history can be exported as a CSV at any time and cleared on demand. It is stored in browser localStorage — tied to the current browser on the current machine, not shared or transmitted anywhere.
 
 ---
 
-## Limitations
+## CSV Export
 
-Obelus is a heuristic tool, not a compliance guarantee. It validates against known Amazon formatting requirements and SDI structural rules as documented in Amazon's vendor guidance. Rules change. If you encounter a rejection that Obelus did not flag, please report it — that is how the logic improves.
+The export produces a structured matrix designed to serve four purposes at once:
 
-This tool is not affiliated with or endorsed by Amazon.
+1. **Quick review** — overall and per-check status at a glance
+2. **Error location** — each check has its own column pair, so failures are isolated, not mixed into a single comment field
+3. **Resolution guidance** — a dedicated Resolution column sits next to each failed check with a specific instruction on what to fix and where in the XML
+4. **Ticket creation** — the file can be shared directly with IT or an Amazon contact as a self-contained fault report
+
+The column structure is:
+
+| Block | Columns |
+|-------|---------|
+| Fixed metadata | Checked At · File · Invoice # · DocType · Total Amount · Linked To · PO Number(s) · ASIN/EAN(s) · Header Status · Overall Status |
+| Per check (repeated for each check) | `[Check] — Status` · `[Check] — Detail` · `[Check] — Resolution` |
+
+Status cells contain PASS, FAIL, WARN, or NA. Resolution cells are populated only on FAIL or WARN. The file is UTF-8 with BOM for correct rendering in Excel.
+
+Export is available from both single-invoice view and batch view.
+
+---
+
+## How to Use It
+
+1. Download `Obelus1.0.html`
+2. Open it in any modern browser (Chrome, Firefox, Edge, Safari)
+3. Drag and drop one or more `.xml` invoice files onto the upload zone
+4. Review results — header checks with resolution hints, line-item breakdown, and the manual verification panel
+5. Export a CSV to file, share with a colleague, or attach to a support ticket
+
+No server. No upload. No account. Everything runs locally in your browser.
+
+---
+
+## Supported Document Types
+
+| Code | Type |
+|------|------|
+| TD01 | Standard invoice |
+| TD04 | Credit note |
+| TD05 | Debit note |
+| TD24 | Deferred invoice |
+| TD25 | Deferred credit note |
+
+---
+
+## SDI Recipient Codes
+
+| Code | Channel |
+|------|---------|
+| `XR6XN0E` | Retail |
+| `ERI9GSW` | Dropship |
+| `ZDHP2W8` | Advantage |
+
+---
+
+## Privacy
+
+All processing happens in your browser. No invoice data is transmitted, stored remotely, or logged anywhere outside your machine. The file never leaves your device.
+
+---
+
+## Requirements
+
+Any modern browser. No installation. No dependencies. No internet connection required.
 
 ---
 
 ## License
 
-MIT License. Free to use, modify, and distribute. If you find it useful, feedback is welcome on [LinkedIn](https://www.linkedin.com/in/oscar-b-43572422/).
-
----
-
-## Contributing
-
-If you work with Italian Amazon vendors and encounter validation patterns not covered here, open an issue or submit a pull request. The more edge cases the logic handles, the more useful it becomes for everyone.
-
-
----
-**Maintained by [Oscar Bares]**
+Provided as-is for internal vendor use. Not affiliated with or endorsed by Amazon.
