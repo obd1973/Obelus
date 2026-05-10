@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ =====================================================
+ OBELUS TOOLKIT — Template: TD05 - NOTA DI DEBITO
+ github.com/obd1973/Obelus
+ =====================================================
+ COME USARE QUESTO TEMPLATE:
+ 1. Apri prima Obelus Mentor per capire ogni campo.
+ 2. Compila tutti i campi indicati con [ ] parentesi.
+ 3. Rimuovi TUTTI i commenti prima di inviare allo SDI.
+ 4. Valida il file con Obelus prima di inviarlo.
+
+ QUANDO USARE TD05:
+ Usa questo template per aumentare l'importo di una
+ fattura già emessa (TD01) — ad esempio quando è
+ necessario aggiungere una rettifica di prezzo o un
+ addebito aggiuntivo dopo l'invio della fattura
+ originale.
+
+ La nota di debito deve fare riferimento al numero
+ della fattura originale in DatiFattureCollegate.
+ Senza questo riferimento la nota non verrà
+ compensata automaticamente nel sistema OFA di Amazon.
+
+ IMPORTANTE: L'importo indicato in questa nota di
+ debito rappresenta l'IMPORTO AGGIUNTIVO addebitato,
+ non il totale dell'intera fattura originale.
+ =====================================================
+-->
+<p:FatturaElettronica versione="FPR12"
+    xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
+    xmlns:p="http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2">
+
+    <FatturaElettronicaHeader>
+
+        <!-- =========================================
+             DATI DI TRASMISSIONE
+             ========================================= -->
+        <DatiTrasmissione>
+            <IdTrasmittente>
+                <IdPaese>IT</IdPaese>
+                <IdCodice>[TUO_CODICE_FISCALE]</IdCodice>
+            </IdTrasmittente>
+            <ProgressivoInvio>[NUMERO_PROGRESSIVO_TRASMISSIONE]</ProgressivoInvio>
+            <FormatoTrasmissione>SDI11</FormatoTrasmissione>
+            <!-- NON MODIFICARE -->
+            <CodiceDestinatario>[CODICE_SDI_AMAZON]</CodiceDestinatario>
+            <!-- NON MODIFICARE — Usa il codice corretto per il tuo canale:
+                 Retail (Vendor Central): XR6XN0E
+                 Dropship:                ERI9GSW
+                 Advantage:               ZDHP2W8 -->
+            <PECDestinatario>amazoneu@legalmail.it</PECDestinatario>
+            <!-- NON MODIFICARE -->
+        </DatiTrasmissione>
+
+        <!-- =========================================
+             DATI FORNITORE — LA TUA AZIENDA
+             ========================================= -->
+        <CedentePrestatore>
+            <DatiAnagrafici>
+                <IdFiscaleIVA>
+                    <IdPaese>IT</IdPaese>
+                    <IdCodice>[TUA_PARTITA_IVA_SENZA_PREFISSO_IT]</IdCodice>
+                </IdFiscaleIVA>
+                <Anagrafica>
+                    <Denominazione>[RAGIONE_SOCIALE_TUA_AZIENDA]</Denominazione>
+                </Anagrafica>
+                <RegimeFiscale>[CODICE_REGIME_FISCALE]</RegimeFiscale>
+            </DatiAnagrafici>
+            <Sede>
+                <Indirizzo>[VIA_O_PIAZZA]</Indirizzo>
+                <NumeroCivico>[NUMERO_CIVICO]</NumeroCivico>
+                <CAP>[CAP]</CAP>
+                <Comune>[COMUNE]</Comune>
+                <Nazione>IT</Nazione>
+            </Sede>
+        </CedentePrestatore>
+
+        <!-- =========================================
+             DATI ACQUIRENTE — AMAZON — NON MODIFICARE
+             ========================================= -->
+        <CessionarioCommittente>
+            <DatiAnagrafici>
+                <IdFiscaleIVA>
+                    <IdPaese>IT</IdPaese>
+                    <IdCodice>08973230967</IdCodice>
+                </IdFiscaleIVA>
+                <Anagrafica>
+                    <Denominazione>AMAZON EU SARL, SUCCURSALE ITALIANA</Denominazione>
+                </Anagrafica>
+            </DatiAnagrafici>
+            <Sede>
+                <Indirizzo>VIALE MONTE GRAPPA</Indirizzo>
+                <NumeroCivico>3/5</NumeroCivico>
+                <CAP>20124</CAP>
+                <Comune>MILANO</Comune>
+                <Nazione>IT</Nazione>
+            </Sede>
+        </CessionarioCommittente>
+
+    </FatturaElettronicaHeader>
+
+    <FatturaElettronicaBody>
+
+        <!-- =========================================
+             DATI GENERALI DOCUMENTO
+             ========================================= -->
+        <DatiGenerali>
+            <DatiGeneraliDocumento>
+                <TipoDocumento>TD05</TipoDocumento>
+                <!-- NON MODIFICARE -->
+                <Divisa>EUR</Divisa>
+                <!-- NON MODIFICARE -->
+                <Data>[AAAA-MM-GG]</Data>
+                <!-- Data di emissione di questa nota di debito -->
+                <Numero>[TUO_NUMERO_NOTA_DEBITO_UNIVOCO]</Numero>
+                <!-- Deve essere univoco. Usa la tua sequenza numerica per le note di debito. -->
+                <ImportoTotaleDocumento>[IMPORTO_AGGIUNTIVO_IVA_INCLUSA]</ImportoTotaleDocumento>
+                <!-- L'importo aggiuntivo addebitato, non il totale della fattura originale.
+                     Deve corrispondere esattamente all'ImportoPagamento in fondo. -->
+
+                <!-- =========================================
+                     CODICE CAUSALE — OBBLIGATORIO PER OFA
+                     PQV = Variazione prezzo/quantità
+                     PPV = Variazione prezzo di acquisto
+                     QPD = Sconto per pagamento anticipato
+                     ========================================= -->
+                <Causale>PQV - [BREVE_DESCRIZIONE_MOTIVO]</Causale>
+                <!-- Esempio: PQV - Addebito aggiuntivo fattura [NUMERO_FATTURA_ORIGINALE] -->
+
+            </DatiGeneraliDocumento>
+
+            <!-- =========================================
+                 RIFERIMENTO FATTURA ORIGINALE — OBBLIGATORIO
+                 Collega questa nota di debito alla fattura
+                 originale. Obbligatorio per la compensazione
+                 automatica OFA.
+                 ========================================= -->
+            <DatiFattureCollegate>
+                <IdDocumento>[NUMERO_FATTURA_ORIGINALE]</IdDocumento>
+                <!-- Il numero fattura della TD01 originale -->
+                <Data>[DATA_FATTURA_ORIGINALE_AAAA-MM-GG]</Data>
+                <!-- Data della fattura originale -->
+            </DatiFattureCollegate>
+
+            <!-- =========================================
+                 RIFERIMENTO ORDINE DI ACQUISTO
+                 Stesso PO della fattura originale.
+                 ========================================= -->
+            <DatiOrdineAcquisto>
+                <RiferimentoNumeroLinea>1</RiferimentoNumeroLinea>
+                <IdDocumento>[NUMERO_PO_AMAZON]</IdDocumento>
+            </DatiOrdineAcquisto>
+
+        </DatiGenerali>
+
+        <!-- =========================================
+             RIGHE NOTA DI DEBITO
+             Descrivi l'addebito aggiuntivo applicato.
+             ========================================= -->
+        <DatiBeniServizi>
+
+            <DettaglioLinee>
+                <NumeroLinea>1</NumeroLinea>
+                <CodiceArticolo>
+                    <CodiceTipo>[EAN_O_ASIN]</CodiceTipo>
+                    <CodiceValore>[CODICE_PRODOTTO_DAL_PO_AMAZON]</CodiceValore>
+                </CodiceArticolo>
+                <Descrizione>[DESCRIZIONE_ADDEBITO_AGGIUNTIVO]</Descrizione>
+                <Quantita>[QUANTITA]</Quantita>
+                <PrezzoUnitario>[PREZZO_UNITARIO]</PrezzoUnitario>
+                <PrezzoTotale>[TOTALE_RIGA_SENZA_IVA]</PrezzoTotale>
+                <AliquotaIVA>[ALIQUOTA_IVA]</AliquotaIVA>
+            </DettaglioLinee>
+
+            <!-- =========================================
+                 RIEPILOGO IVA
+                 ========================================= -->
+            <DatiRiepilogo>
+                <AliquotaIVA>[ALIQUOTA_IVA]</AliquotaIVA>
+                <ImponibileImporto>[IMPONIBILE_AGGIUNTIVO_A_QUESTA_ALIQUOTA]</ImponibileImporto>
+                <Imposta>[IMPORTO_IVA]</Imposta>
+            </DatiRiepilogo>
+
+        </DatiBeniServizi>
+
+        <!-- =========================================
+             DATI PAGAMENTO
+             ========================================= -->
+        <DatiPagamento>
+            <CondizioniPagamento>TP02</CondizioniPagamento>
+            <!-- NON MODIFICARE -->
+            <DettaglioPagamento>
+                <ModalitaPagamento>MP05</ModalitaPagamento>
+                <!-- NON MODIFICARE -->
+                <ImportoPagamento>[IMPORTO_AGGIUNTIVO_IVA_INCLUSA]</ImportoPagamento>
+                <!-- Deve corrispondere esattamente all'ImportoTotaleDocumento -->
+            </DettaglioPagamento>
+        </DatiPagamento>
+
+    </FatturaElettronicaBody>
+
+</p:FatturaElettronica>
+
+<!--
+ =====================================================
+ CHECKLIST PRIMA DI INVIARE — TD05 NOTA DI DEBITO
+ =====================================================
+ [ ] TipoDocumento è TD05
+ [ ] DatiFattureCollegate contiene il numero corretto
+     della fattura originale in IdDocumento
+ [ ] Causale contiene PQV, PPV o QPD
+ [ ] La ragione sociale Amazon è esattamente:
+     AMAZON EU SARL, SUCCURSALE ITALIANA
+ [ ] Il CodiceDestinatario corrisponde al tuo canale
+ [ ] La PEC è: amazoneu@legalmail.it
+ [ ] La P.IVA Amazon è: 08973230967
+ [ ] Ogni riga ha un EAN o ASIN valido
+ [ ] ImportoPagamento corrisponde a ImportoTotaleDocumento
+ [ ] Tutti i commenti sono stati rimossi dal file
+ [ ] Il file è stato validato con Obelus prima dell'invio
+ =====================================================
+-->

@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+=============================================================================
+TEMPLATE: TD24 - FATTURA DIFFERITA (DEFERRED INVOICE)
+=============================================================================
+Amazon constants are pre-filled. DO NOT modify them.
+Fill in all fields marked with [] brackets.
+Remove all comments before submitting to SDI.
+=============================================================================
+USE THIS WHEN: You are invoicing for goods already
+delivered with a DDT (Documento di Trasporto).
+TD24 allows you to consolidate multiple deliveries
+from the same month into a single invoice.
+Must be issued by the 15th of the month following
+the month of delivery.
+=============================================================================
+-->
+<p:FatturaElettronica versione="FPR12"
+xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
+xmlns:p="http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2">
+<FatturaElettronicaHeader>
+<!-- === TRANSMISSION DATA === -->
+<DatiTrasmissione>
+<IdTrasmittente>
+<IdPaese>IT</IdPaese>
+<IdCodice>[YOUR_FISCAL_CODE]</IdCodice>
+</IdTrasmittente>
+<ProgressivoInvio>[SEQUENTIAL_TRANSMISSION_NUMBER]</ProgressivoInvio>
+<FormatoTrasmissione>SDI11</FormatoTrasmissione>
+<!-- DO NOT CHANGE: Amazon destination code -->
+<CodiceDestinatario>[SWIFT_CODE]</CodiceDestinatario>
+<!-- DO NOT CHANGE: Amazon certified email -->
+<PECDestinatario>amazoneu@legalmail.it</PECDestinatario>
+</DatiTrasmissione>
+<!-- === SUPPLIER DATA (YOUR COMPANY) === -->
+<CedentePrestatore>
+<DatiAnagrafici>
+<IdFiscaleIVA>
+<IdPaese>IT</IdPaese>
+<IdCodice>[YOUR_VAT_NUMBER_WITHOUT_IT_PREFIX]</IdCodice>
+</IdFiscaleIVA>
+<Anagrafica>
+<Denominazione>[YOUR_COMPANY_NAME]</Denominazione>
+</Anagrafica>
+<RegimeFiscale>[YOUR_TAX_REGIME_CODE]</RegimeFiscale>
+<!-- Common: RF01 = Ordinario -->
+</DatiAnagrafici>
+<Sede>
+<Indirizzo>[YOUR_STREET_ADDRESS]</Indirizzo>
+<NumeroCivico>[YOUR_STREET_NUMBER]</NumeroCivico>
+<CAP>[YOUR_POSTCODE]</CAP>
+<Comune>[YOUR_CITY]</Comune>
+<Nazione>IT</Nazione>
+</Sede>
+</CedentePrestatore>
+<!-- === BUYER DATA (AMAZON) - DO NOT CHANGE ANY OF THESE === -->
+<CessionarioCommittente>
+<DatiAnagrafici>
+<IdFiscaleIVA>
+<IdPaese>IT</IdPaese>
+<IdCodice>08973230967</IdCodice>
+</IdFiscaleIVA>
+<Anagrafica>
+<Denominazione>AMAZON EU SARL, SUCCURSALE ITALIANA</Denominazione>
+</Anagrafica>
+</DatiAnagrafici>
+<Sede>
+<Indirizzo>VIALE MONTE GRAPPA</Indirizzo>
+<NumeroCivico>3/5</NumeroCivico>
+<CAP>20124</CAP>
+<Comune>MILANO</Comune>
+<Nazione>IT</Nazione>
+</Sede>
+</CessionarioCommittente>
+</FatturaElettronicaHeader>
+<FatturaElettronicaBody>
+<!-- === GENERAL DOCUMENT DATA === -->
+<DatiGenerali>
+<DatiGeneraliDocumento>
+<!-- TD24 = Deferred Invoice -->
+<TipoDocumento>TD24</TipoDocumento>
+<Divisa>EUR</Divisa>
+<Data>[YYYY-MM-DD]</Data>
+<!-- Invoice date. Must be issued by the 15th of the
+month FOLLOWING the month of delivery.
+Example: Goods delivered in March 2026 ->
+Invoice date must be by 2026-04-15 -->
+<Numero>[YOUR_UNIQUE_INVOICE_NUMBER]</Numero>
+<!-- Must be unique per year -->
+<ImportoTotaleDocumento>[TOTAL_AMOUNT_INCLUDING_VAT]</ImportoTotaleDocumento>
+</DatiGeneraliDocumento>
+<!-- === PURCHASE ORDER REFERENCE === -->
+<!-- Copy the PO number EXACTLY as received from Amazon -->
+<!-- Retail POs = 8 characters (e.g. 6HAEVIIY) -->
+<DatiOrdineAcquisto>
+<RiferimentoNumeroLinea>1</RiferimentoNumeroLinea>
+<!-- Add one RiferimentoNumeroLinea per line item covered by this PO -->
+<IdDocumento>[AMAZON_PO_NUMBER]</IdDocumento>
+</DatiOrdineAcquisto>
+<!-- If you have MULTIPLE POs in one invoice, add another block: -->
+<!--
+<DatiOrdineAcquisto>
+<RiferimentoNumeroLinea>[LINE_NUMBERS_FOR_THIS_PO]</RiferimentoNumeroLinea>
+<IdDocumento>[SECOND_AMAZON_PO_NUMBER]</IdDocumento>
+</DatiOrdineAcquisto>
+-->
+<!-- ========================================================= -->
+<!-- DDT REFERENCE - MANDATORY FOR TD24                        -->
+<!-- This is the legal basis for the deferred                  -->
+<!-- invoice. Without it, use TD01 instead.                    -->
+<!-- ========================================================= -->
+<DatiDDT>
+<NumeroDDT>[YOUR_DDT_NUMBER]</NumeroDDT>
+<!-- The delivery document number -->
+<DataDDT>[YYYY-MM-DD]</DataDDT>
+<!-- The date of the delivery document -->
+<RiferimentoNumeroLinea>1</RiferimentoNumeroLinea>
+<!-- Add one RiferimentoNumeroLinea per line item covered by this DDT -->
+</DatiDDT>
+<!-- If you have MULTIPLE DDTs in one invoice
+(consolidating multiple deliveries), add another block: -->
+<!--
+<DatiDDT>
+<NumeroDDT>[SECOND_DDT_NUMBER]</NumeroDDT>
+<DataDDT>[YYYY-MM-DD]</DataDDT>
+<RiferimentoNumeroLinea>[LINE_NUMBERS_FOR_THIS_DDT]</RiferimentoNumeroLinea>
+</DatiDDT>
+-->
+</DatiGenerali>
+<!-- === LINE ITEMS === -->
+<DatiBeniServizi>
+<!-- Repeat this block for EACH product line -->
+<DettaglioLinee>
+<NumeroLinea>1</NumeroLinea>
+<!-- *** PRODUCT IDENTIFICATION - CRITICAL *** -->
+<!-- Without this, the invoice WILL be rejected -->
+<!-- Find the code on the Amazon Purchase Order for each item -->
+<!-- Accepted CodiceTipo values: EAN, ASIN, UPC, SKU, ISBN,
+JAN, EN, SSC, ISSN, MATERIAL NUMBER, MINSAN -->
+<!-- WARNING: If the code starts with 0, include the leading zero! -->
+<CodiceArticolo>
+<CodiceTipo>[EAN_OR_ASIN]</CodiceTipo>
+<CodiceValore>[PRODUCT_CODE_FROM_AMAZON_PO]</CodiceValore>
+</CodiceArticolo>
+<Descrizione>[PRODUCT_DESCRIPTION]</Descrizione>
+<Quantita>[QUANTITY]</Quantita>
+<PrezzoUnitario>[UNIT_PRICE]</PrezzoUnitario>
+<PrezzoTotale>[LINE_TOTAL_BEFORE_VAT]</PrezzoTotale>
+<AliquotaIVA>[VAT_RATE]</AliquotaIVA>
+<!-- Italian VAT rates: 22.00, 10.00, 5.00, 4.00 -->
+</DettaglioLinee>
+<!-- === CHARGE CODES (if applicable) === -->
+<!-- Use for CONAI, RAEE, SIAE contributions: -->
+<!--
+<DettaglioLinee>
+<NumeroLinea>[NEXT_LINE_NUMBER]</NumeroLinea>
+<TipoCessionePrestazione>C</TipoCessionePrestazione>
+<CodiceArticolo>
+<CodiceTipo>SSC</CodiceTipo>
+<CodiceValore>SH</CodiceValore>
+</CodiceArticolo>
+<Descrizione>SPECIAL HANDLING</Descrizione>
+<Quantita>1.00</Quantita>
+<PrezzoUnitario>[CHARGE_AMOUNT]</PrezzoUnitario>
+<PrezzoTotale>[CHARGE_AMOUNT]</PrezzoTotale>
+<AliquotaIVA>0.00</AliquotaIVA>
+<Natura>N1</Natura>
+</DettaglioLinee>
+-->
+<!-- === TAX SUMMARY === -->
+<!-- One DatiRiepilogo block per VAT rate used -->
+<DatiRiepilogo>
+<AliquotaIVA>[VAT_RATE]</AliquotaIVA>
+<!-- e.g. 22.00 -->
+<ImponibileImporto>[NET_AMOUNT_AT_THIS_RATE]</ImponibileImporto>
+<!-- Total of line items before VAT at this rate -->
+<Imposta>[VAT_AMOUNT]</Imposta>
+<!-- VAT amount = ImponibileImporto x AliquotaIVA / 100 -->
+</DatiRiepilogo>
+</DatiBeniServizi>
+<!-- === PAYMENT DATA === -->
+<DatiPagamento>
+<CondizioniPagamento>TP02</CondizioniPagamento>
+<!-- TP02 = Complete payment -->
+<DettaglioPagamento>
+<ModalitaPagamento>MP05</ModalitaPagamento>
+<!-- MP05 = Bank transfer -->
+<ImportoPagamento>[TOTAL_AMOUNT_INCLUDING_VAT]</ImportoPagamento>
+<!-- Must match ImportoTotaleDocumento -->
+</DettaglioPagamento>
+</DatiPagamento>
+</FatturaElettronicaBody>
+</p:FatturaElettronica>
