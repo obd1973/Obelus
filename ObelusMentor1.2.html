@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Obelus Mentor | Amazon Invoice Guide</title>
+    <style>
+        :root {
+            --navy: #1B2A4A;
+            --navy-dark: #131f37;
+            --navy-light: rgba(255,255,255,0.08);
+            --primary: #FF9900;
+            --primary-light: rgba(255,153,0,0.12);
+            --primary-dark: #cc7a00;
+            --text-main: #2d3748;
+            --text-muted: #718096;
+            --bg-body: #f7fafc;
+            --bg-card: #ffffff;
+            --border: #e2e8f0;
+            --danger: #CC0C39;
+            --danger-bg: #fff5f5;
+            --warning: #E77600;
+            --warning-bg: #fff8ec;
+            --success: #067D62;
+            --success-bg: #f0fff4;
+            --code-bg: #1a202c;
+            --code-text: #a0aec0;
+            --locator-bg: #ebf8ff;
+            --locator-border: #90cdf4;
+            --locator-text: #2a4365;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: var(--text-main);
+            background-color: var(--bg-body);
+            line-height: 1.6;
+            display: flex;
+            height: 100vh;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- Sidebar --- */
+        .sidebar {
+            width: 300px;
+            background-color: var(--navy);
+            border-right: none;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            flex-shrink: 0;
+            transition: transform 0.3s ease;
+        }
+
+        .brand {
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+        }
+
+        .brand-logo svg { height: 38px; width: auto; }
+
+        .brand-tag {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 4px;
+            padding-left: 2px;
+        }
+
+        /* --- Language Toggle --- */
+        .lang-toggle {
+            display: flex;
+            background: rgba(0,0,0,0.2);
+            border-radius: 6px;
+            padding: 2px;
+            border: 1px solid rgba(255,255,255,0.15);
+            flex-shrink: 0;
+        }
+
+        .lang-btn {
+            background: transparent;
+            border: none;
+            padding: 4px 10px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            border-radius: 4px;
+            color: rgba(255,255,255,0.45);
+            transition: all 0.2s;
+        }
+
+        .lang-btn.active {
+            background: rgba(255,255,255,0.15);
+            color: #ffffff;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+
+        .nav-group { margin-top: 20px; }
+
+        .nav-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            padding: 0 24px;
+            margin-bottom: 6px;
+            letter-spacing: 0.8px;
+        }
+
+        .nav-item {
+            padding: 9px 24px 9px 30px;
+            cursor: pointer;
+            font-size: 0.88rem;
+            color: rgba(255,255,255,0.65);
+            transition: all 0.15s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background-color: var(--navy-light);
+            color: rgba(255,255,255,0.9);
+        }
+
+        .nav-item.active {
+            background-color: rgba(255,153,0,0.15);
+            border-left-color: var(--primary);
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        /* --- Main Content --- */
+        .main-content {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .content-header { margin-bottom: 24px; }
+        
+        .title-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .content-title {
+            font-size: 2rem;
+            color: var(--text-main);
+            line-height: 1.2;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .tag-critical { background: var(--danger-bg); color: var(--danger); }
+        .tag-warning { background: var(--warning-bg); color: var(--warning); }
+        .tag-success { background: var(--success-bg); color: var(--success); }
+
+        .pill-frequency {
+            display: inline-block;
+            background: var(--border);
+            color: var(--text-muted);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid #cbd5e0;
+        }
+
+        /* --- Always-Visible XML Snippet --- */
+        .xml-snippet-box {
+            background: var(--code-bg);
+            color: var(--code-text);
+            padding: 30px;
+            border-radius: 8px;
+            font-family: Consolas, Monaco, "Courier New", monospace;
+            font-size: 1.05rem;
+            line-height: 1.8;
+            white-space: pre; 
+            margin-bottom: 30px;
+            border: 1px solid #4a5568;
+            box-shadow: inset 0 4px 6px rgba(0,0,0,0.3);
+            overflow: auto; 
+            min-height: 200px; 
+        }
+
+        .xml-snippet-box::-webkit-scrollbar { height: 12px; width: 12px; }
+        .xml-snippet-box::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 0 0 8px 8px; }
+        .xml-snippet-box::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 6px; border: 2px solid var(--code-bg); }
+        .xml-snippet-box::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.35); }
+
+        .xml-snippet-box span.tag-name { color: #63b3ed; } 
+        .xml-snippet-box span.val { color: #f6e05e; } 
+        .xml-snippet-box span.comment { color: #718096; font-style: italic; }
+
+        .qa-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .qa-question {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--navy);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .qa-answer { font-size: 1rem; color: var(--text-main); }
+
+        .highlight-box {
+            background-color: var(--primary-light);
+            border-left: 4px solid var(--primary);
+            padding: 16px;
+            border-radius: 0 8px 8px 0;
+            margin-top: 12px;
+            font-family: monospace;
+            font-size: 0.95rem;
+            color: var(--navy);
+            white-space: pre-line;
+        }
+
+        /* --- Software Locator Box --- */
+        .software-locator {
+            background-color: var(--locator-bg);
+            border: 1px solid var(--locator-border);
+            border-left: 5px solid #4299e1;
+            border-radius: 8px;
+            padding: 24px;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+
+        .locator-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            color: var(--locator-text);
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+        }
+
+        .locator-body { font-size: 0.95rem; color: var(--text-main); margin-bottom: 16px; }
+        .locator-body strong { color: var(--locator-text); }
+
+        .helpdesk-box {
+            background: rgba(255,255,255,0.6);
+            border: 1px dashed #90cdf4;
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .helpdesk-box strong { color: var(--locator-text); font-size: 0.85rem; text-transform: uppercase; display: block; margin-bottom: 4px; }
+        .helpdesk-text { font-family: Georgia, serif; font-style: italic; color: var(--text-main); }
+
+        /* --- Sequential Navigation --- */
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn-nav {
+            padding: 10px 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--navy);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-nav:hover { background: var(--border); }
+
+        /* Empty State */
+        .empty-state { text-align: center; margin: auto; max-width: 550px; }
+        .empty-state h2 { color: var(--navy); margin-bottom: 16px; font-size: 2.2rem; }
+        .empty-state p { color: var(--text-muted); font-size: 1.1rem; }
+        .empty-state .meta { display: inline-block; margin-top: 20px; padding: 8px 16px; background: var(--border); border-radius: 20px; font-weight: 600; color: var(--navy); font-size: 0.9rem;}
+
+        /* Mobile Menu Toggle */
+        .mobile-menu-btn {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 56px;
+            height: 56px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 100;
+            cursor: pointer;
+            font-size: 24px;
+        }
+
+        @media (max-width: 768px) {
+            body { flex-direction: column; overflow: auto; }
+            .sidebar { position: fixed; left: -300px; top: 0; bottom: 0; z-index: 50; box-shadow: 4px 0 15px rgba(0,0,0,0.2); }
+            .sidebar.open { transform: translateX(300px); }
+            .main-content { padding: 20px; overflow-y: visible; }
+            .mobile-menu-btn { display: flex; align-items: center; justify-content: center; }
+            .nav-buttons { flex-direction: column; gap: 10px; }
+            .btn-nav { justify-content: center; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+
+    <div class="sidebar" id="sidebar">
+        <div class="brand" onclick="goHome()">
+            <div class="brand-logo">
+                <svg viewBox="0 0 200 38" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="19" cy="19" r="15.5" fill="none" stroke="white" stroke-width="3.4"/>
+                    <line x1="9.5" y1="19" x2="28.5" y2="19" stroke="white" stroke-width="3.4" stroke-linecap="round"/>
+                    <circle cx="19" cy="11.2" r="2.8" fill="white"/>
+                    <circle cx="19" cy="26.8" r="2.8" fill="white"/>
+                    <text x="44" y="26" font-family="'Segoe UI', Arial, sans-serif" font-size="19" font-weight="300" fill="white" letter-spacing="4">OBELUS</text>
+                </svg>
+                <div class="brand-tag">/ mentor</div>
+            </div>
+            <div class="lang-toggle" onclick="event.stopPropagation()">
+                <button class="lang-btn active" id="btn-en" onclick="setLanguage('en')">EN</button>
+                <button class="lang-btn" id="btn-it" onclick="setLanguage('it')">IT</button>
+            </div>
+        </div>
+
+        <div class="nav-group">
+            <div class="nav-title" id="nav-title-critical" style="color: #ff6b6b;">Critical (Cause Rejection)</div>
+            <div class="nav-item" id="nav-routing" onclick="loadContent('routing')">1. SDI Routing Code</div>
+            <div class="nav-item" id="nav-product" onclick="loadContent('product')">2. Product Code (EAN/ASIN)</div>
+            <div class="nav-item" id="nav-po" onclick="loadContent('po')">3. PO Number</div>
+            <div class="nav-item" id="nav-invoice" onclick="loadContent('invoice')">4. Invoice Number</div>
+            <div class="nav-item" id="nav-credit" onclick="loadContent('credit')">5. Credit/Debit Notes</div>
+        </div>
+
+        <div class="nav-group">
+            <div class="nav-title" id="nav-title-warning" style="color: #ffb347;">Common Mistakes</div>
+            <div class="nav-item" id="nav-total" onclick="loadContent('total')">6. Total equals Payment</div>
+            <div class="nav-item" id="nav-vat" onclick="loadContent('vat')">7. VAT Rate Formatting</div>
+            <div class="nav-item" id="nav-riepilogo" onclick="loadContent('riepilogo')">8. VAT Summary Block</div>
+            <div class="nav-item" id="nav-buyer" onclick="loadContent('buyer')">9. Amazon Buyer Details</div>
+        </div>
+
+        <div class="nav-group">
+            <div class="nav-title" id="nav-title-success" style="color: #68d391;">Set-Once</div>
+            <div class="nav-item" id="nav-identity" onclick="loadContent('identity')">10. Vendor Legal Identity</div>
+        </div>
+        <div style="height: 40px;"></div>
+    </div>
+
+    <div class="main-content" id="content-area"></div>
+
+    <script>
+        let currentLang = 'en';
+        let currentKey = null;
+
+        const navOrder = ['routing', 'product', 'po', 'invoice', 'credit', 'total', 'vat', 'riepilogo', 'buyer', 'identity'];
+
+        const xmlSnippets = {
+            'routing': `&lt;<span class="tag-name">DatiTrasmissione</span>&gt;\n  &lt;<span class="tag-name">CodiceDestinatario</span>&gt;<span class="val">XR6XN0E</span>&lt;/<span class="tag-name">CodiceDestinatario</span>&gt; <span class="comment">&lt;!-- Example for Retail --&gt;</span>\n&lt;/<span class="tag-name">DatiTrasmissione</span>&gt;`,
+            'product': `&lt;<span class="tag-name">CodiceArticolo</span>&gt;\n  &lt;<span class="tag-name">CodiceTipo</span>&gt;<span class="val">EAN</span>&lt;/<span class="tag-name">CodiceTipo</span>&gt;\n  &lt;<span class="tag-name">CodiceValore</span>&gt;<span class="val">0123456789012</span>&lt;/<span class="tag-name">CodiceValore</span>&gt;\n&lt;/<span class="tag-name">CodiceArticolo</span>&gt;`,
+            'po': `&lt;<span class="tag-name">DatiOrdineAcquisto</span>&gt;\n  &lt;<span class="tag-name">RiferimentoNumeroLinea</span>&gt;<span class="val">1</span>&lt;/<span class="tag-name">RiferimentoNumeroLinea</span>&gt;\n  &lt;<span class="tag-name">IdDocumento</span>&gt;<span class="val">6HAEVIIY</span>&lt;/<span class="tag-name">IdDocumento</span>&gt;\n&lt;/<span class="tag-name">DatiOrdineAcquisto</span>&gt;`,
+            'invoice': `&lt;<span class="tag-name">DatiGeneraliDocumento</span>&gt;\n  &lt;<span class="tag-name">TipoDocumento</span>&gt;<span class="val">TD01</span>&lt;/<span class="tag-name">TipoDocumento</span>&gt;\n  &lt;<span class="tag-name">Data</span>&gt;<span class="val">2026-03-26</span>&lt;/<span class="tag-name">Data</span>&gt;\n  &lt;<span class="tag-name">Numero</span>&gt;<span class="val">INV-2026-001</span>&lt;/<span class="tag-name">Numero</span>&gt;\n&lt;/<span class="tag-name">DatiGeneraliDocumento</span>&gt;`,
+            'credit': `&lt;<span class="tag-name">DatiFattureCollegate</span>&gt;\n  &lt;<span class="tag-name">IdDocumento</span>&gt;<span class="val">INV-2026-001</span>&lt;/<span class="tag-name">IdDocumento</span>&gt; <span class="comment">&lt;!-- Original Invoice --&gt;</span>\n&lt;/<span class="tag-name">DatiFattureCollegate</span>&gt;\n...\n&lt;<span class="tag-name">Causale</span>&gt;<span class="val">PQV</span>&lt;/<span class="tag-name">Causale</span>&gt; <span class="comment">&lt;!-- Reason Code (PQV, PPV, or QPD) --&gt;</span>`,
+            'total': `&lt;<span class="tag-name">DatiGeneraliDocumento</span>&gt;\n  &lt;<span class="tag-name">ImportoTotaleDocumento</span>&gt;<span class="val">1220.00</span>&lt;/<span class="tag-name">ImportoTotaleDocumento</span>&gt;\n&lt;/<span class="tag-name">DatiGeneraliDocumento</span>&gt;\n...\n&lt;<span class="tag-name">DettaglioPagamento</span>&gt;\n  &lt;<span class="tag-name">ImportoPagamento</span>&gt;<span class="val">1220.00</span>&lt;/<span class="tag-name">ImportoPagamento</span>&gt;\n&lt;/<span class="tag-name">DettaglioPagamento</span>&gt;`,
+            'vat': `&lt;<span class="tag-name">DettaglioLinee</span>&gt;\n  &lt;<span class="tag-name">PrezzoUnitario</span>&gt;<span class="val">100.00</span>&lt;/<span class="tag-name">PrezzoUnitario</span>&gt;\n  &lt;<span class="tag-name">AliquotaIVA</span>&gt;<span class="val">22.00</span>&lt;/<span class="tag-name">AliquotaIVA</span>&gt;\n&lt;/<span class="tag-name">DettaglioLinee</span>&gt;`,
+            'riepilogo': `&lt;<span class="tag-name">DatiRiepilogo</span>&gt;\n  &lt;<span class="tag-name">AliquotaIVA</span>&gt;<span class="val">22.00</span>&lt;/<span class="tag-name">AliquotaIVA</span>&gt;\n  &lt;<span class="tag-name">ImponibileImporto</span>&gt;<span class="val">1000.00</span>&lt;/<span class="tag-name">ImponibileImporto</span>&gt; <span class="comment">&lt;!-- Sum of all line items at 22% --&gt;</span>\n  &lt;<span class="tag-name">Imposta</span>&gt;<span class="val">220.00</span>&lt;/<span class="tag-name">Imposta</span>&gt; <span class="comment">&lt;!-- Exact calculated VAT --&gt;</span>\n&lt;/<span class="tag-name">DatiRiepilogo</span>&gt;`,
+            'buyer': `&lt;<span class="tag-name">CessionarioCommittente</span>&gt;\n  &lt;<span class="tag-name">DatiAnagrafici</span>&gt;\n    &lt;<span class="tag-name">IdFiscaleIVA</span>&gt;\n      &lt;<span class="tag-name">IdPaese</span>&gt;<span class="val">IT</span>&lt;/<span class="tag-name">IdPaese</span>&gt;\n      &lt;<span class="tag-name">IdCodice</span>&gt;<span class="val">08973230967</span>&lt;/<span class="tag-name">IdCodice</span>&gt;\n    &lt;/<span class="tag-name">IdFiscaleIVA</span>&gt;\n    &lt;<span class="tag-name">Anagrafica</span>&gt;\n      &lt;<span class="tag-name">Denominazione</span>&gt;<span class="val">AMAZON EU SARL...</span>&lt;/<span class="tag-name">Denominazione</span>&gt;\n    &lt;/<span class="tag-name">Anagrafica</span>&gt;\n  &lt;/<span class="tag-name">DatiAnagrafici</span>&gt;\n&lt;/<span class="tag-name">CessionarioCommittente</span>&gt;`,
+            'identity': `&lt;<span class="tag-name">CedentePrestatore</span>&gt;\n  &lt;<span class="tag-name">DatiAnagrafici</span>&gt;\n    &lt;<span class="tag-name">IdFiscaleIVA</span>&gt;\n      &lt;<span class="tag-name">IdPaese</span>&gt;<span class="val">IT</span>&lt;/<span class="tag-name">IdPaese</span>&gt;\n      &lt;<span class="tag-name">IdCodice</span>&gt;<span class="val">[YOUR_VAT]</span>&lt;/<span class="tag-name">IdCodice</span>&gt;\n    &lt;/<span class="tag-name">IdFiscaleIVA</span>&gt;\n    &lt;<span class="tag-name">RegimeFiscale</span>&gt;<span class="val">RF01</span>&lt;/<span class="tag-name">RegimeFiscale</span>&gt;\n  &lt;/<span class="tag-name">DatiAnagrafici</span>&gt;\n&lt;/<span class="tag-name">CedentePrestatore</span>&gt;`
+        };
+
+        const i18n = {
+            en: {
+                nav: {
+                    titleCritical: "Critical (Cause Rejection)", titleWarning: "Common Mistakes", titleSuccess: "Set-Once",
+                    routing: "1. SDI Routing Code", product: "2. Product Code (EAN)", po: "3. PO Number", invoice: "4. Invoice Number", credit: "5. Credit/Debit Notes",
+                    total: "6. Total equals Payment", vat: "7. VAT Rate Formatting", riepilogo: "8. VAT Summary Block", buyer: "9. Amazon Buyer Details", identity: "10. Vendor Legal Identity"
+                },
+                welcome: `<div class="empty-state"><h2>Welcome to Obelus Mentor</h2><p>The Italian SDI XML templates can look intimidating, but you don't need to be a developer to understand them. Most rejections come down to just a few fields.</p><br><p>Select a field from the menu on the left to see exactly what it means, why it matters, and how to fill it out perfectly every time.</p><div class="meta">10 Topics &nbsp;&bull;&nbsp; ~12 Min Read</div></div>`,
+                tags: { critical: "CRITICAL", warning: "COMMON MISTAKE", success: "SET-ONCE" },
+                ui: { locatorTitle: "Where to find this in your invoicing software", helpdeskTitle: "Ultimate Fallback (Helpdesk Script)" },
+                data: {
+                    'routing': {
+                        title: 'CodiceDestinatario (Routing Code)', frequency: 'Set once in your invoicing software',
+                        content: [
+                            { q: 'What is this?', a: 'It\'s a digital mailbox address. Like a postal code, but for electronic invoices.' },
+                            { q: 'Why does it exist?', a: 'Italy\'s tax system (SDI) acts like a post office for invoices. This code tells SDI which Amazon mailbox to deliver your invoice to.' },
+                            { q: 'Why does it go wrong?', a: 'Amazon has multiple "mailboxes". If you deliver to the wrong one, it\'s like sending mail to the wrong apartment.' },
+                            { q: 'How to fix it:', a: 'Use the exact code below based on your workflow. Note: They contain the number zero (0), not the letter O.', isHighlight: true, highlightText: 'Retail (Vendor Central): XR6XN0E\nDropship: ERI9GSW\nAdvantage: ZDHP2W8' }
+                        ],
+                        locator: {
+                            text: 'Look in your Customer Directory (Address Book) when setting up the Amazon customer profile. Find fields named <strong>Codice Univoco</strong>, <strong>Codice Destinatario</strong>, or <strong>Codice SDI</strong>.',
+                            xmlTag: '<CodiceDestinatario>'
+                        }
+                    },
+                    'product': {
+                        title: 'Product Code (CodiceValore)', frequency: 'Every invoice, every entry',
+                        content: [
+                            { q: 'What is this?', a: 'The product\'s unique identity card. EAN is the barcode number (13 digits). ASIN is Amazon\'s internal product ID.' },
+                            { q: 'Why does it exist?', a: 'This code is how Amazon matches "Entry 1 on your invoice" to "the specific product they ordered". Without it, they reject the entire invoice.' },
+                            { q: 'Why does it go wrong?', a: 'Three reasons: (a) missing code, (b) Excel stripped the leading zero, or (c) mismatch with the PO.' },
+                            { q: 'How to fix it:', a: 'Open the Amazon Purchase Order. Copy the EAN or ASIN exactly — character for character, leading zeros included. Make sure <CodiceTipo> says "EAN" or "ASIN".' }
+                        ],
+                        locator: {
+                            text: 'Look at the specific row for your product on the invoice screen (or in your Product Catalog). The field is usually called <strong>Codice Articolo</strong>, <strong>Codice Fornitore</strong>, <strong>EAN</strong>, or <strong>Barcode</strong>.',
+                            xmlTag: '<CodiceValore>'
+                        }
+                    },
+                    'po': {
+                        title: 'PO Number (IdDocumento)', frequency: 'Every invoice',
+                        content: [
+                            { q: 'What is this?', a: 'The Purchase Order number — Amazon\'s reference number for the order.' },
+                            { q: 'Why does it exist?', a: 'It links your invoice to their order. No PO = no match = no payment.' },
+                            { q: 'Why does it go wrong?', a: 'Usually a typo, or the vendor uses their own internal order number instead of Amazon\'s PO number.' },
+                            { q: 'How to fix it:', a: 'Find the 8 or 9 character string in Vendor Central under "Orders" (also on the PDF PO document). Place it in the DatiOrdineAcquisto section.' }
+                        ],
+                        locator: {
+                            text: 'Look in the main document settings (Header) for a section called <strong>Dati Ordine di Acquisto</strong>, <strong>Riferimento Ordine</strong>, or <strong>Documenti Collegati</strong>. Enter the PO into the <strong>Numero Ordine</strong> field.',
+                            xmlTag: '<IdDocumento> under <DatiOrdineAcquisto>'
+                        }
+                    },
+                    'invoice': {
+                        title: 'Invoice Number (Numero)', frequency: 'Automatic and unique per invoice',
+                        content: [
+                            { q: 'What is this?', a: 'Your invoice\'s unique identifier — like a serial number.' },
+                            { q: 'Why does it exist?', a: 'Italian law requires every invoice to have a unique number. SDI uses it to prevent double-billing.' },
+                            { q: 'Why does it go wrong?', a: 'The vendor\'s software failed to reset numbering in January, or they manually re-sent an old invoice with the same number to "replace" it (it won\'t).' },
+                            { q: 'How to fix it:', a: 'Never reuse an invoice number. If an invoice is rejected by Amazon but accepted by SDI, you must issue a Credit Note (TD04) to cancel it, then issue a brand new invoice (TD01) with a new number.' }
+                        ],
+                        locator: {
+                            text: 'This is usually handled automatically by your software\'s numbering sequence. If you need to force a reset, check your general settings for <strong>Numerazione Documenti</strong>.',
+                            xmlTag: '<Numero>'
+                        }
+                    },
+                    'credit': {
+                        title: 'Credit & Debit Notes (TD04/TD05)', frequency: 'When correcting an invoice or processing returns',
+                        content: [
+                            { q: 'What are these?', a: 'TD04 is a Credit Note (you owe Amazon money, or you are cancelling a previous invoice). TD05 is a Debit Note (Amazon owes you more money).' },
+                            { q: 'Why do they exist?', a: 'You cannot delete an invoice once SDI accepts it. You must use TD04 to legally reverse the charges.' },
+                            { q: 'Why do they go wrong?', a: 'Vendors frequently forget to link the Credit Note back to the original invoice, or they forget the required Reason Code for price/quantity disputes.' },
+                            { q: 'How to fix it:', a: '1. Always add a DatiFattureCollegate block containing the original invoice number.\n2. For Price/Quantity discrepancies, you MUST include a Causale block with PQV (Price Variance), PPV (Purchase Price Variance), or QPD (Quick Pay Discount).', isHighlight: true, highlightText: 'Rule of thumb: Every Credit Note must reference exactly ONE original invoice.' }
+                        ],
+                        locator: {
+                            text: 'Look for <strong>Fatture Collegate</strong> or <strong>Documento di Origine</strong> to link the original invoice. For the Reason Code (PQV/PPV/QPD), look for a text field named <strong>Causale Documento</strong> or <strong>Note</strong>.',
+                            xmlTag: '<IdDocumento> under <DatiFattureCollegate> AND <Causale>'
+                        }
+                    },
+                    'total': {
+                        title: 'Total Amount = Payment Amount', frequency: 'Keep identical to the cent',
+                        content: [
+                            { q: 'What is this?', a: 'Two fields that must match exactly: the invoice total (ImportoTotaleDocumento) and the payment amount (ImportoPagamento).' },
+                            { q: 'Why does it exist?', a: 'It\'s a sanity check. If the invoice says "you owe me €1,000" and the payment says "please pay €1,005," the system flags it.' },
+                            { q: 'Why does it go wrong?', a: 'Usually rounding errors when VAT is calculated, or updating one field manually but forgetting the other.' },
+                            { q: 'How to fix it:', a: 'Double check that your line items + VAT exactly equals both the Total Document Amount and the Payment Amount.' }
+                        ],
+                        locator: {
+                            text: 'Usually calculated automatically. If it fails, check your payment terms (<strong>Condizioni di Pagamento</strong>) or your software\'s VAT rounding settings.',
+                            xmlTag: '<ImportoTotaleDocumento> vs <ImportoPagamento>'
+                        }
+                    },
+                    'vat': {
+                        title: 'VAT Rate Formatting', frequency: 'Every line item',
+                        content: [
+                            { q: 'What is this?', a: 'The tax percentage applied to each product. Italy has standard rates like 22%, 10%, 5%, 4%.' },
+                            { q: 'Why does it exist?', a: 'Italian law requires every item to declare its VAT rate for accounting correctness.' },
+                            { q: 'Why does it go wrong?', a: 'Applying the wrong rate, leaving it blank, or formatting it incorrectly as a whole number instead of a decimal.' },
+                            { q: 'How to fix it:', a: 'Always include the decimal places. Write "22.00", not "22".' }
+                        ],
+                        locator: {
+                            text: 'Found on the line item level. Make sure your software isn\'t stripping decimals. Look for <strong>Aliquota IVA</strong> or <strong>Codice IVA</strong>.',
+                            xmlTag: '<AliquotaIVA>'
+                        }
+                    },
+                    'riepilogo': {
+                        title: 'VAT Summary Block (DatiRiepilogo)', frequency: 'Every invoice (at the bottom)',
+                        content: [
+                            { q: 'What is this?', a: 'A block at the end of the XML that totals up the taxable amount and VAT amount for EACH VAT rate used in the invoice.' },
+                            { q: 'Why does it exist?', a: 'SDI uses this to verify the math of the entire invoice in one quick glance.' },
+                            { q: 'Why does it go wrong?', a: 'A vendor adds a line item with 22% VAT, but forgets to update the summary block at the bottom. The math no longer matches, causing a silent rejection.' },
+                            { q: 'How to fix it:', a: 'Ensure that for every unique VAT rate (AliquotaIVA) used in your line items, there is exactly one matching DatiRiepilogo block summing up the totals perfectly.' }
+                        ],
+                        locator: {
+                            text: 'You usually don\'t type this manually! Most software calculates this automatically at the bottom of the invoice <strong>only if</strong> you assigned the correct VAT rate to every single line item.',
+                            xmlTag: '<DatiRiepilogo>'
+                        }
+                    },
+                    'buyer': {
+                        title: 'Amazon Buyer Details', frequency: 'Set once as a saved customer',
+                        content: [
+                            { q: 'What is this?', a: 'Amazon\'s legal company name, address, and VAT number — the "bill to" section.' },
+                            { q: 'Why does it exist?', a: 'Legally, an invoice must identify who is being billed. SDI and Amazon verify this exactly.' },
+                            { q: 'Why does it go wrong?', a: 'Typing "Amazon" instead of the full legal name. Even one character difference causes rejection.' },
+                            { q: 'How to fix it:', a: 'Copy and paste the exact values below into your software and never change them:', isHighlight: true, highlightText: 'Name: AMAZON EU SARL, SUCCURSALE ITALIANA\nVAT: IT08973230967\nAddress: Viale Monte Grappa 3/5, 20124, Milano' }
+                        ],
+                        locator: {
+                            text: 'Found in your Customer Directory (<strong>Anagrafica Clienti</strong>). Update the master profile, not just the single invoice.',
+                            xmlTag: '<CessionarioCommittente>'
+                        }
+                    },
+                    'identity': {
+                        title: 'Vendor Legal Identity', frequency: 'If Obelus flags it, fix your software config',
+                        content: [
+                            { q: 'What is this?', a: 'Your company name, VAT number, address, fiscal code, and tax regime (RF01 for most).' },
+                            { q: 'Why does it exist?', a: 'The invoice must legally identify who is sending the bill.' },
+                            { q: 'Why does it go wrong?', a: 'Usually an initial setup error or typo. Once correct, it never changes unless your legal structure changes.' },
+                            { q: 'How to fix it:', a: 'Verify your company details in your invoicing software against your actual Italian Chamber of Commerce registration.' }
+                        ],
+                        locator: {
+                            text: 'Found in your Company Settings (<strong>Impostazioni Azienda</strong> or <strong>Profilo Fiscale</strong>).',
+                            xmlTag: '<CedentePrestatore>'
+                        }
+                    }
+                }
+            },
+            it: {
+                nav: {
+                    titleCritical: "Critico (Causa Scarto)", titleWarning: "Errori Comuni", titleSuccess: "Configurazione",
+                    routing: "1. Codice Destinatario", product: "2. Codice Articolo (EAN)", po: "3. Numero Ordine (PO)", invoice: "4. Numero Fattura", credit: "5. Note di Credito/Debito",
+                    total: "6. Totale uguale al Pagamento", vat: "7. Formato Aliquota IVA", riepilogo: "8. Blocco Riepilogo IVA", buyer: "9. Dati Acquirente Amazon", identity: "10. Identità Venditore"
+                },
+                welcome: `<div class="empty-state"><h2>Benvenuto in Obelus Mentor</h2><p>I template XML dello SDI possono sembrare intimidatori, ma non serve essere uno sviluppatore per capirli. La maggior parte degli scarti dipende da pochi campi.</p><br><p>Seleziona un campo dal menu a sinistra per capire esattamente cosa significa, perché è importante e come compilarlo perfettamente ogni volta.</p><div class="meta">10 Argomenti &nbsp;&bull;&nbsp; ~12 Min di Lettura</div></div>`,
+                tags: { critical: "CRITICO", warning: "ERRORE COMUNE", success: "IMPOSTA E DIMENTICA" },
+                ui: { locatorTitle: "Dove trovarlo nel tuo software di fatturazione", helpdeskTitle: "Soluzione Alternativa (Messaggio per l'Assistenza)" },
+                data: {
+                    'routing': {
+                        title: 'CodiceDestinatario', frequency: 'Impostalo una sola volta nel tuo gestionale',
+                        content: [
+                            { q: 'Cos\'è questo?', a: 'È un indirizzo di posta digitale. Come un codice postale, ma per le fatture elettroniche.' },
+                            { q: 'Perché esiste?', a: 'Lo SDI funge da ufficio postale. Questo codice dice allo SDI in quale "cassetta postale" di Amazon recapitare la fattura.' },
+                            { q: 'Perché ci sono errori?', a: 'Amazon ha diverse cassette postali. Se lo invii a quella sbagliata, è come spedire una lettera al condominio giusto ma all\'appartamento sbagliato.' },
+                            { q: 'Come risolverlo:', a: 'Usa esattamente il codice sottostante in base al tuo modello. Nota: contengono il numero zero (0), non la lettera O.', isHighlight: true, highlightText: 'Retail (Vendor Central): XR6XN0E\nDropship: ERI9GSW\nAdvantage: ZDHP2W8' }
+                        ],
+                        locator: {
+                            text: 'Cerca nell\'<strong>Anagrafica Clienti</strong> o <strong>Rubrica</strong> quando configuri il profilo di Amazon. Cerca i campi denominati <strong>Codice Univoco</strong>, <strong>Codice Destinatario</strong> o <strong>Codice SDI</strong>.',
+                            xmlTag: '<CodiceDestinatario>'
+                        }
+                    },
+                    'product': {
+                        title: 'CodiceValore (EAN o ASIN)', frequency: 'Su ogni fattura e per ogni riga',
+                        content: [
+                            { q: 'Cos\'è questo?', a: 'La carta d\'identità del prodotto. L\'EAN è il codice a barre (13 cifre). L\'ASIN è il codice interno di Amazon.' },
+                            { q: 'Perché esiste?', a: 'Amazon riceve migliaia di fatture. Questo codice serve al sistema per associare la "Riga 1" allo specifico prodotto ordinato. Senza di esso, la fattura viene scartata.' },
+                            { q: 'Perché ci sono errori?', a: 'Tre motivi comuni: (a) codice mancante, (b) Excel ha rimosso lo zero iniziale, o (c) non combacia con il codice presente sull\'ordine.' },
+                            { q: 'Come risolverlo:', a: 'Apri l\'Ordine di Acquisto Amazon (PO). Copia il codice in modo esatto, inclusi gli zeri iniziali. Assicurati che <CodiceTipo> indichi "EAN" o "ASIN".' }
+                        ],
+                        locator: {
+                            text: 'Cerca nella riga specifica del prodotto sulla schermata della fattura (o nell\'<strong>Anagrafica Articoli</strong>). Il campo di solito si chiama <strong>Codice Articolo</strong>, <strong>Codice Fornitore</strong>, <strong>EAN</strong> o <strong>Barcode</strong>.',
+                            xmlTag: '<CodiceValore>'
+                        }
+                    },
+                    'po': {
+                        title: 'Numero Ordine (IdDocumento)', frequency: 'Ogni fattura',
+                        content: [
+                            { q: 'Cos\'è questo?', a: 'Il numero dell\'Ordine di Acquisto (PO) — il riferimento di Amazon per l\'ordine che ti hanno inviato.' },
+                            { q: 'Perché esiste?', a: 'Collega la tua fattura al loro ordine. Nessun PO = nessuna corrispondenza = nessun pagamento.' },
+                            { q: 'Perché ci sono errori?', a: 'Di solito un errore di battitura, o il venditore inserisce il proprio numero d\'ordine interno invece del PO di Amazon.' },
+                            { q: 'Come risolverlo:', a: 'Trova la stringa di 8 o 9 caratteri in Vendor Central sotto "Ordini" (è anche sul PDF dell\'ordine). Inseriscila in DatiOrdineAcquisto.' }
+                        ],
+                        locator: {
+                            text: 'Cerca nelle impostazioni principali del documento (Testata) una sezione chiamata <strong>Dati Ordine di Acquisto</strong>, <strong>Riferimento Ordine</strong> o <strong>Documenti Collegati</strong>. Inserisci il PO nel campo <strong>Numero Ordine</strong>.',
+                            xmlTag: '<IdDocumento> sotto <DatiOrdineAcquisto>'
+                        }
+                    },
+                    'invoice': {
+                        title: 'Numero Fattura (Numero)', frequency: 'Automatico e univoco per ogni fattura',
+                        content: [
+                            { q: 'Cos\'è questo?', a: 'L\'identificativo univoco della tua fattura — come un numero di serie.' },
+                            { q: 'Perché esiste?', a: 'La legge italiana richiede una numerazione progressiva e univoca. Lo SDI lo usa per prevenire fatturazioni doppie.' },
+                            { q: 'Perché ci sono errori?', a: 'Il gestionale non ha azzerato la numerazione a Gennaio, oppure si tenta di inviare nuovamente una vecchia fattura con lo stesso numero per "sostituirla" (lo SDI la bloccherà).' },
+                            { q: 'Come risolverlo:', a: 'Non riutilizzare mai un numero di fattura. Se una fattura viene scartata da Amazon ma accettata dallo SDI, devi emettere una Nota di Credito (TD04) per annullarla, e poi emettere una nuova fattura (TD01) con un nuovo numero.' }
+                        ],
+                        locator: {
+                            text: 'Questo viene solitamente gestito in automatico dalla sequenza di numerazione del tuo gestionale. Se devi forzare un reset, controlla le impostazioni generali per la <strong>Numerazione Documenti</strong>.',
+                            xmlTag: '<Numero>'
+                        }
+                    },
+                    'credit': {
+                        title: 'Note di Credito/Debito (TD04/TD05)', frequency: 'Per correggere fatture o processare resi',
+                        content: [
+                            { q: 'Cosa sono?', a: 'TD04 è una Nota di Credito (devi soldi ad Amazon o stai stornando una fattura). TD05 è una Nota di Debito.' },
+                            { q: 'Perché esistono?', a: 'Non puoi cancellare una fattura una volta che lo SDI l\'ha accettata. Devi usare il TD04 per stornarla legalmente.' },
+                            { q: 'Perché ci sono errori?', a: 'Spesso i venditori dimenticano di collegare la Nota di Credito alla fattura originale, o dimenticano il codice Causale richiesto per le dispute di prezzo/quantità.' },
+                            { q: 'Come risolverlo:', a: '1. Inserisci sempre un blocco DatiFattureCollegate con il numero della fattura originale.\n2. Per discrepanze di Prezzo/Quantità, DEVI includere un blocco Causale con PQV (Variazione Prezzo), PPV o QPD.', isHighlight: true, highlightText: 'Regola d\'oro: Ogni Nota di Credito deve fare riferimento ad UNA SOLA fattura originale.' }
+                        ],
+                        locator: {
+                            text: 'Cerca <strong>Fatture Collegate</strong> o <strong>Documento di Origine</strong> per collegare la fattura originale. Per il codice Causale (PQV/PPV/QPD), cerca un campo di testo chiamato <strong>Causale Documento</strong> o <strong>Note</strong>.',
+                            xmlTag: '<IdDocumento> sotto <DatiFattureCollegate> E <Causale>'
+                        }
+                    },
+                    'total': {
+                        title: 'Totale Documento = Importo Pagamento', frequency: 'Mantieni gli importi identici al centesimo',
+                        content: [
+                            { q: 'Cos\'è questo?', a: 'Due campi che devono avere la stessa cifra: il totale (ImportoTotaleDocumento) e il pagamento (ImportoPagamento).' },
+                            { q: 'Perché esiste?', a: 'È un controllo logico. Se la fattura dice "mi devi 1.000€" e il pagamento dice "paga 1.005€", il sistema la blocca.' },
+                            { q: 'Perché ci sono errori?', a: 'Di solito errori di arrotondamento dell\'IVA, o il venditore ha aggiornato un campo dimenticandosi dell\'altro.' },
+                            { q: 'Come risolverlo:', a: 'Verifica due volte che la somma delle righe + IVA sia esattamente uguale sia al Totale Documento che all\'Importo Pagamento.' }
+                        ],
+                        locator: {
+                            text: 'Calcolato automaticamente. Se fallisce, controlla le <strong>Condizioni di Pagamento</strong> o le impostazioni di arrotondamento IVA del software.',
+                            xmlTag: '<ImportoTotaleDocumento> contro <ImportoPagamento>'
+                        }
+                    },
+                    'vat': {
+                        title: 'Formato Aliquota IVA', frequency: 'Ogni riga fattura',
+                        content: [
+                            { q: 'Cos\'è questo?', a: 'La percentuale di tassa applicata. In Italia abbiamo aliquote come 22%, 10%, 5%, 4%.' },
+                            { q: 'Perché esiste?', a: 'La legge richiede di dichiarare l\'aliquota per ogni riga ai fini contabili.' },
+                            { q: 'Perché ci sono errori?', a: 'Applicazione dell\'aliquota sbagliata, o l\'inserimento di "22" invece del formato decimale richiesto "22.00".' },
+                            { q: 'Come risolverlo:', a: 'Includi sempre i decimali. Scrivi "22.00", non "22".' }
+                        ],
+                        locator: {
+                            text: 'Si trova a livello di riga. Assicurati che il software non ometta i decimali. Cerca <strong>Aliquota IVA</strong> o <strong>Codice IVA</strong>.',
+                            xmlTag: '<AliquotaIVA>'
+                        }
+                    },
+                    'riepilogo': {
+                        title: 'Blocco Riepilogo IVA (DatiRiepilogo)', frequency: 'Ogni fattura (alla fine del documento)',
+                        content: [
+                            { q: 'Cos\'è questo?', a: 'Un blocco alla fine dell\'XML che somma l\'imponibile e l\'imposta per OGNI aliquota IVA utilizzata nella fattura.' },
+                            { q: 'Perché esiste?', a: 'Lo SDI lo usa per verificare la matematica dell\'intera fattura in un colpo solo.' },
+                            { q: 'Perché ci sono errori?', a: 'Si aggiunge una riga al 22%, ma si dimentica di aggiornare il blocco di riepilogo in fondo. I conti non tornano e si genera uno scarto silenzioso.' },
+                            { q: 'Come risolverlo:', a: 'Assicurati che per ogni aliquota IVA unica usata nelle righe, ci sia esattamente un blocco DatiRiepilogo che ne sommi i totali alla perfezione.' }
+                        ],
+                        locator: {
+                            text: 'Di solito non si digita manualmente! La maggior parte dei software lo calcola automaticamente in fondo alla fattura <strong>solo se</strong> hai assegnato la corretta Aliquota IVA a ogni singola riga.',
+                            xmlTag: '<DatiRiepilogo>'
+                        }
+                    },
+                    'buyer': {
+                        title: 'Dati Acquirente Amazon', frequency: 'Impostalo una volta come cliente salvato',
+                        content: [
+                            { q: 'Cos\'è questo?', a: 'Nome dell\'azienda, indirizzo e Partita IVA di Amazon.' },
+                            { q: 'Perché esiste?', a: 'Legalmente, una fattura deve identificare il destinatario. Lo SDI e Amazon verificano questi dati alla lettera.' },
+                            { q: 'Perché ci sono errori?', a: 'Si scrive "Amazon" invece della ragione sociale esatta. Un solo carattere sbagliato causa lo scarto.' },
+                            { q: 'Come risolverlo:', a: 'Copia e incolla i valori esatti sottostanti e non modificarli mai:', isHighlight: true, highlightText: 'Nome: AMAZON EU SARL, SUCCURSALE ITALIANA\nP.IVA: IT08973230967\nIndirizzo: Viale Monte Grappa 3/5, 20124, Milano' }
+                        ],
+                        locator: {
+                            text: 'Si trova nell\'<strong>Anagrafica Clienti</strong>. Aggiorna il profilo principale, non solo la singola fattura.',
+                            xmlTag: '<CessionarioCommittente>'
+                        }
+                    },
+                    'identity': {
+                        title: 'Identità Fiscale Venditore', frequency: 'Se Obelus segnala errore, correggi il gestionale',
+                        content: [
+                            { q: 'Cos\'è questo?', a: 'La tua ragione sociale, P.IVA, indirizzo, codice fiscale e regime fiscale (spesso RF01).' },
+                            { q: 'Perché esiste?', a: 'La fattura deve identificare legalmente chi emette il documento.' },
+                            { q: 'Perché ci sono errori?', a: 'Di solito è un errore di setup iniziale del software. Una volta corretto, non cambia mai.' },
+                            { q: 'Come risolverlo:', a: 'Verifica i dettagli della tua azienda nel software di fatturazione confrontandoli con la tua reale visura camerale.' }
+                        ],
+                        locator: {
+                            text: 'Si trova nelle <strong>Impostazioni Azienda</strong> o nel <strong>Profilo Fiscale</strong> del tuo software.',
+                            xmlTag: '<CedentePrestatore>'
+                        }
+                    }
+                }
+            }
+        };
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            document.getElementById('btn-en').classList.remove('active');
+            document.getElementById('btn-it').classList.remove('active');
+            document.getElementById(`btn-${lang}`).classList.add('active');
+
+            const t = i18n[lang].nav;
+            document.getElementById('nav-title-critical').innerText = t.titleCritical;
+            document.getElementById('nav-title-warning').innerText = t.titleWarning;
+            document.getElementById('nav-title-success').innerText = t.titleSuccess;
+            
+            navOrder.forEach(key => {
+                const el = document.getElementById('nav-' + key);
+                if(el && t[key]) el.innerText = t[key];
+            });
+
+            if (currentKey) loadContent(currentKey, false);
+            else document.getElementById('content-area').innerHTML = i18n[lang].welcome;
+        }
+
+        function loadContent(key, updateHash = true) {
+            currentKey = key;
+            const langData = i18n[currentLang];
+            const section = langData.data[key];
+            
+            if (updateHash) window.history.pushState(null, null, '#' + key);
+            
+            const tagClassMap = { 'routing': 'tag-critical', 'product': 'tag-critical', 'po': 'tag-critical', 'invoice': 'tag-critical', 'credit': 'tag-critical', 'total': 'tag-warning', 'vat': 'tag-warning', 'riepilogo': 'tag-warning', 'buyer': 'tag-warning', 'identity': 'tag-success' };
+            const tagLabelMap = { 'tag-critical': langData.tags.critical, 'tag-warning': langData.tags.warning, 'tag-success': langData.tags.success };
+            
+            const tagClass = tagClassMap[key];
+            const tagLabel = tagLabelMap[tagClass];
+            const xmlSnippet = xmlSnippets[key];
+
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            const activeNav = document.getElementById('nav-' + key);
+            if(activeNav) activeNav.classList.add('active');
+
+            let html = `
+                <div class="content-header">
+                    <span class="tag ${tagClass}">${tagLabel}</span>
+                    <div class="title-wrapper">
+                        <h1 class="content-title">${section.title}</h1>
+                    </div>
+                    <div class="pill-frequency">${section.frequency}</div>
+                </div>
+            `;
+
+            if (xmlSnippet) html += `<div class="xml-snippet-box">${xmlSnippet}</div>`;
+
+            section.content.forEach(item => {
+                html += `
+                    <div class="qa-card">
+                        <div class="qa-question">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                            ${item.q}
+                        </div>
+                        <div class="qa-answer">${item.a}</div>
+                        ${item.isHighlight ? `<div class="highlight-box">${item.highlightText}</div>` : ''}
+                    </div>
+                `;
+            });
+
+            // Software Locator UI
+            if (section.locator) {
+                const helpdeskMsg = currentLang === 'en' 
+                    ? `Hello, I need to issue an electronic invoice to Amazon. Can you tell me exactly where to input data so that it populates the ${section.locator.xmlTag} field in the final FatturaPA XML?`
+                    : `Buongiorno, devo emettere una fattura elettronica ad Amazon. Potete indicarmi esattamente dove inserire il dato affinché popoli il campo ${section.locator.xmlTag} nell'XML finale della FatturaPA?`;
+
+                html += `
+                    <div class="software-locator">
+                        <div class="locator-header">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+                            ${langData.ui.locatorTitle}
+                        </div>
+                        <div class="locator-body">
+                            ${section.locator.text}
+                        </div>
+                        <div class="helpdesk-box">
+                            <strong>${langData.ui.helpdeskTitle}</strong>
+                            <div class="helpdesk-text">"${helpdeskMsg}"</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const currentIndex = navOrder.indexOf(key);
+            const prevKey = currentIndex > 0 ? navOrder[currentIndex - 1] : null;
+            const nextKey = currentIndex < navOrder.length - 1 ? navOrder[currentIndex + 1] : null;
+
+            const prevText = currentLang === 'en' ? '&larr; Previous' : '&larr; Precedente';
+            const nextText = currentLang === 'en' ? 'Next &rarr;' : 'Successivo &rarr;';
+
+            html += `<div class="nav-buttons">`;
+            if (prevKey) html += `<a href="#${prevKey}" class="btn-nav" onclick="loadContent('${prevKey}')">${prevText}</a>`;
+            else html += `<div></div>`;
+            if (nextKey) html += `<a href="#${nextKey}" class="btn-nav" onclick="loadContent('${nextKey}')">${nextText}</a>`;
+            html += `</div>`;
+
+            document.getElementById('content-area').innerHTML = html;
+            document.getElementById('content-area').scrollTo(0,0);
+            document.getElementById('sidebar').classList.remove('open');
+        }
+
+        function goHome() {
+            currentKey = null;
+            window.history.pushState(null, null, window.location.pathname);
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.getElementById('content-area').innerHTML = i18n[currentLang].welcome;
+        }
+
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const hash = window.location.hash.replace('#', '');
+            if (hash && navOrder.includes(hash)) loadContent(hash, false);
+            else goHome();
+        });
+        
+        window.addEventListener('hashchange', () => {
+            const hash = window.location.hash.replace('#', '');
+            if (hash && navOrder.includes(hash)) loadContent(hash, false);
+            else if (!hash) goHome();
+        });
+
+    </script>
+</body>
+</html>
