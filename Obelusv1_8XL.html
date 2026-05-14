@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Obelusv1.8XL | Amazon Invoice Validator</title>
+    <title>Obelusv1.9XL | Amazon Invoice Validator</title>
     <style>
         :root {
             --amz-squid-ink: #232F3E;
@@ -104,7 +104,7 @@
             </svg>
         </div>
         <div class="header-right">
-            <span id="version-badge" style="color: var(--amz-border); font-size: 12px; margin-right: 10px;">Obelusv1.8XL</span>
+            <span id="version-badge" style="color: var(--amz-border); font-size: 12px; margin-right: 10px;">Obelusv1.9XL</span>
             <button class="btn-history" onclick="location.reload()">Reset / New</button>
             <button class="btn-history" onclick="openHistory()">History</button>
             <div class="trust-badge">Privacy Mode: Local Processing Only</div>
@@ -116,7 +116,7 @@
         <div class="update-left">
             <span class="update-icon">🔔</span>
             <div class="update-text">
-                <div><strong>Update available: <span id="update-new-version"></span></strong> — you are running v1.8XL</div>
+                <div><strong>Update available: <span id="update-new-version"></span></strong> — you are running v1.9XL</div>
                 <div class="release-notes" id="update-release-notes"></div>
             </div>
         </div>
@@ -606,10 +606,11 @@
                     const idDoc = getVal(df, 'IdDocumento');
                     if (idDoc) { linkedFound = true; res.linkedDocId = idDoc; }
                 }
+                
                 addH('OFACompliance', 'Reference to Original Invoice',
-                    linkedFound ? 'PASS' : 'FAIL',
+                    linkedFound ? 'PASS' : 'WARN',
                     linkedFound ? 'Linked to original invoice: ' + res.linkedDocId : 'Missing — no reference to the original invoice found',
-                    !linkedFound ? 'Credit/debit notes must reference the original invoice they are correcting. Add a DatiFattureCollegate section with IdDocumento set to the original invoice number. This is required for automatic clearing.' : '',
+                    !linkedFound ? 'Without a DatiFattureCollegate reference, this credit note cannot automatically clear a specific invoice and will sit on your account balance. This is perfectly fine for generic rebates, CoOp, or chargebacks. However, if this is meant to correct a specific price/quantity discrepancy, you should add the original invoice number.' : '',
                     'DatiFattureCollegate');
 
                 // Causale check — only required for price/quantity (PQV/PPV) and quick pay discount (QPD) credit notes.
@@ -784,7 +785,9 @@
                         '<p style="font-size:16px;"><strong>Result:</strong> <span class="status-badge bg-' + d.overallStatus + '" style="font-size:14px;">' + d.overallStatus + '</span></p>' +
                         (d.overallStatus === 'PASS'
                             ? '<p style="margin-top:10px; color:var(--success); font-size:13px;">All checks passed. This invoice is compliant and ready to submit through your invoicing software to SDI.</p>'
-                            : '<p style="margin-top:10px; color:var(--error); font-size:13px;">Issues found. Correct the problems listed on the left, then validate again with Obelus. Do not submit to SDI until all checks pass. Consider using the Obelus XML templates for guidance.</p>') +
+                            : (d.overallStatus === 'WARN' 
+                                ? '<p style="margin-top:10px; color:var(--warning); font-size:13px;">Warnings found. Review the yellow items on the left. If they are expected (e.g., generic chargebacks), you can submit to SDI. Otherwise, correct them first.</p>'
+                                : '<p style="margin-top:10px; color:var(--error); font-size:13px;">Issues found. Correct the problems listed on the left, then validate again with Obelus. Do not submit to SDI until all checks pass. Consider using the Obelus XML templates for guidance.</p>')) +
                     '</div>';
 
             } else {
@@ -929,7 +932,7 @@
         // Checks once per session only. Compares running version against Gist.
         // Never blocks the tool — any network failure is silently ignored.
 
-        const OBELUS_CURRENT_VERSION = '1.8XL';
+        const OBELUS_CURRENT_VERSION = '1.9XL';
         const OBELUS_VERSION_URL = 'https://gist.githubusercontent.com/obd1973/dcc1fe61253aa87a7bce5a1f41345cb4/raw/version.json';
 
         (async function checkForUpdates() {
