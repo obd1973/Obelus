@@ -1,5 +1,6 @@
-[Read in Italian 🇮🇹](README-it.md)
----
+Here is the updated `README.md` file reflecting the new features, UI changes, and export formats introduced in version 2.3aXL:
+
+## [Read in Italian 🇮🇹](https://www.google.com/search?q=README-it.md)
 
 # Obelus Toolkit
 
@@ -21,16 +22,20 @@ Obelus is no longer just a validator. It is a complete, four-part self-service e
 
 The Obelus ecosystem is built on four components working together:
 
-### 1. Obelus Validator (`Obelusv1.8XL.html`)
-The core diagnostic engine. You open it in a browser and drop in your XML files. It runs a strict suite of Amazon-specific compliance checks (Routing codes, Entity names, VAT numbers, Document types, and Credit/Debit Note OFA matching). It tells you exactly what is wrong, which line in the XML failed, and how to fix it before you submit to SDI.
+### 1. Obelus Validator (`Obelus2.3aXL.html`)
+
+The core diagnostic engine. You open it in a browser and drop in your XML files. It runs a strict suite of Amazon-specific compliance checks (Routing codes, Entity names, VAT numbers, Document types, and Credit/Debit Note OFA matching). It now features a dynamic "Fix Plan" side panel that provides personalized, step-by-step resolution plans[cite: 1]. It also categorizes documents into specific subtypes (like RETAIL, COOP, RETURN, and PQV) to apply exact validation rules[cite: 1]. It tells you exactly what is wrong, which line in the XML failed, and how to fix it before you submit to SDI.
 
 ### 2. Obelus Mentor (`ObelusMentor1.2.html`)
-The "Rosetta Stone." When the Validator flags an error, it links directly to Mentor. Mentor explains *why* the rule exists in plain English (and Italian). Crucially, it includes a **Software Locator** that translates raw XML tags into the actual field names used by popular Italian invoicing software (e.g., "Look for *Codice Univoco* in your *Anagrafica Clienti*"). It even provides copy-paste scripts vendors can send to their software's helpdesk.
+
+The "Rosetta Stone." When the Validator flags an error, the new Fix Plan panel links directly to Mentor[cite: 1]. Mentor explains *why* the rule exists in plain English (and Italian). Crucially, it includes a **Software Locator** that translates raw XML tags into the actual field names used by popular Italian invoicing software (e.g., "Look for *Codice Univoco* in your *Anagrafica Clienti*"). It even provides copy-paste scripts vendors can send to their software's helpdesk.
 
 ### 3. Annotated XML Templates
+
 Instructional blueprints. These are perfectly structured XML files containing explicit instructions, warnings, and checklists. They exist to be read and studied, showing exactly where Amazon's required constants must go.
 
 ### 4. The Golden Dummy (`Golden_Example_100_Percent_Pass.xml`)
+
 A functional prototype. This is a pristine XML file filled with fake company data that is guaranteed to pass Obelus with 100% green checks. Vendors can use it to build trust in the Validator and compare it side-by-side with their broken files to visually spot the differences.
 
 ---
@@ -39,7 +44,7 @@ A functional prototype. This is a pristine XML file filled with fake company dat
 
 * **Zero Dependencies:** No installation. No server. No account. Just download the HTML files and open them. They run instantly on any machine.
 * **Total Privacy:** Everything runs locally using JavaScript and your browser's `localStorage`. Your financial data never leaves your device.
-* **Fix-It Reports:** The Validator exports a highly actionable CSV report. It acts as a self-contained fault report with clear resolution instructions, perfect for handing off to an IT department or software vendor.
+* **Fix-It Reports:** The Validator now exports highly formatted PDF reports for single invoice validations and native Excel (`.xlsx`) batch summaries[cite: 1]. These act as a self-contained fault report with clear resolution instructions, perfect for handing off to an IT department or software vendor.
 * **Batch Processing:** Drop 50 invoices in at once. Obelus cross-references them to flag duplicate invoice numbers and verifies that credit/debit note amounts precisely match their original linked invoices.
 
 ---
@@ -47,8 +52,9 @@ A functional prototype. This is a pristine XML file filled with fake company dat
 ## The Part It Can't Do
 
 Obelus cannot access Vendor Central. Therefore, two things always require a human check:
-1.  **Purchase Orders:** Are the PO numbers open and correct?
-2.  **Product Codes:** Do the ASIN/EAN codes match your active catalog?
+
+1. **Purchase Orders:** Are the PO numbers open and correct?
+2. **Product Codes:** Do the ASIN/EAN codes match your active catalog?
 
 After every validation, the tool surfaces these elements explicitly in their own panel. Not buried. Front and center. It extracts them so you can confirm them.
 
@@ -62,11 +68,11 @@ Obelus validates Amazon's specific formatting and routing requirements. It does 
 
 ## How to Use It
 
-1.  Download the complete Obelus folder.
-2.  Open `Obelusv1.8XL.html` in any modern browser.
-3.  Drag and drop your generated `.xml` invoice files.
-4.  Review the results. If an error is flagged, click the **"📖 Learn more in Mentor"** link to see how to fix it in your software.
-5.  Export the CSV report if you need a record.
+1. Download the complete Obelus folder.
+2. Open `Obelus2.3aXL.html` in any modern browser.
+3. Drag and drop your generated `.xml` invoice files.
+4. Review the results. If an error is flagged, open the floating "Fix Plan" panel to see a step-by-step resolution or click the mentor links to see how to fix it in your software[cite: 1].
+5. Export the PDF or Excel report if you need a record[cite: 1].
 
 That's it.
 
@@ -75,7 +81,7 @@ That's it.
 ## Supported Document Types
 
 | Code | Type |
-|------|------|
+| --- | --- |
 | TD01 | Standard invoice |
 | TD04 | Credit note |
 | TD05 | Debit note |
@@ -87,7 +93,7 @@ That's it.
 ## SDI Recipient Codes
 
 | Code | Channel |
-|------|---------|
+| --- | --- |
 | XR6XN0E | Retail |
 | ERI9GSW | Dropship |
 | ZDHP2W8 | Advantage |
