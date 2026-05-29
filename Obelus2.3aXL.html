@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Obelus 2.3XL | Amazon Invoice Validator</title>
+    <style>
+        :root {
+            --amz-squid-ink: #232F3E;
+            --amz-orange: #FF9900;
+            --amz-blue: #007185;
+            --amz-light-bg: #F2F4F8;
+            --amz-white: #FFFFFF;
+            --amz-border: #D5D9D9;
+            --success: #067D62;
+            --error: #CC0C39;
+            --warning: #E77600;
+            --text-main: #0F1111;
+            --text-muted: #565959;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", Arial, sans-serif; }
+        body { background-color: var(--amz-light-bg); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; overflow-y: auto; }
+        header { background-color: #1B2A4A; color: var(--amz-white); padding: 12px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 10; position: sticky; top: 0; flex-shrink: 0; }
+        .logo { display: flex; align-items: center; }
+        .logo svg { height: 44px; width: auto; }
+        .header-right { display: flex; align-items: center; gap: 12px; }
+        .trust-badge { background-color: rgba(6, 125, 98, 0.2); color: #43C8A7; border: 1px solid #43C8A7; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .btn-history { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; }
+        .btn-history:hover { background: rgba(255,255,255,0.2); }
+        main { flex: 1; display: flex; flex-direction: column; padding: 20px 30px; }
+        #upload-zone { background-color: var(--amz-white); border: 2px dashed var(--amz-border); border-radius: 8px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.2s ease; margin-bottom: 20px; }
+        #upload-zone.dragover { border-color: var(--amz-orange); background-color: rgba(255, 153, 0, 0.05); }
+        #upload-zone h2 { margin-bottom: 10px; }
+        #upload-zone p { color: var(--text-muted); font-size: 14px; }
+        #results-container { display: none; flex-direction: column; gap: 20px; }
+        .top-panes { display: flex; gap: 20px; }
+        .bottom-pane { display: flex; }
+        .pane { background-color: var(--amz-white); border: 1px solid var(--amz-border); border-radius: 8px; flex: 1; display: flex; flex-direction: column; }
+        .pane-header { background-color: #F7F8F8; padding: 12px 20px; border-bottom: 1px solid var(--amz-border); font-weight: 600; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+        .pane-content { padding: 15px 20px; }
+        .check-item { display: flex; gap: 12px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #F0F2F2; font-size: 13px; }
+        .icon { font-weight: bold; font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+        .PASS { color: var(--success); }
+        .FAIL { color: var(--error); }
+        .WARN { color: var(--warning); }
+        .NA { color: var(--text-muted); }
+        .INFO { color: var(--amz-blue); }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .data-table th, .data-table td { border: 1px solid var(--amz-border); padding: 8px 10px; text-align: left; }
+        .data-table th { background-color: #F7F8F8; position: sticky; top: 0; z-index: 1; }
+        .status-badge { padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .bg-PASS { background: #e6f4ea; color: var(--success); }
+        .bg-FAIL { background: #fce8e6; color: var(--error); }
+        .bg-WARN { background: #fdf3c6; color: var(--warning); }
+        .bg-NA { background: #E3E6E6; color: var(--text-muted); }
+        .btn-primary { background-color: var(--amz-orange); border: 1px solid #a88734; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px; }
+        .btn-secondary { background-color: var(--amz-white); border: 1px solid var(--amz-border); padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px; color: var(--text-main); }
+        .btn-secondary:hover { background-color: #F7F8F8; }
+        .sticky-warning { background: #FFF3CD; border: 2px solid #E77600; border-radius: 8px; padding: 14px 20px; margin-bottom: 16px; display: flex; align-items: flex-start; gap: 12px; flex-shrink: 0; position: sticky; top: 0; z-index: 5; }
+        .sticky-warning .warn-icon { font-size: 22px; flex-shrink: 0; }
+        .sticky-warning .warn-text { font-size: 13px; color: var(--text-main); line-height: 1.5; }
+        .sticky-warning .warn-text strong { color: #B45309; }
+        .verify-box { background: #FFF8EC; border: 1px solid #E77600; border-radius: 6px; padding: 12px 15px; margin-top: 15px; }
+        .verify-box h4 { color: #E77600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+        .verify-item { margin-bottom: 10px; display: flex; flex-direction: column; gap: 3px; }
+        .v-label { color: var(--text-muted); font-size: 11px; }
+        .v-value { font-weight: 600; color: var(--text-main); font-family: monospace; font-size: 12px; word-break: break-all; background: rgba(0,0,0,0.04); padding: 3px 6px; border-radius: 3px; }
+        .v-instruction { color: var(--amz-blue); font-size: 11px; font-style: italic; }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center; }
+        .modal-overlay.open { display: flex; }
+        .modal { background: var(--amz-white); border-radius: 8px; width: 92%; max-width: 960px; max-height: 82vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+        .modal-header { padding: 16px 20px; border-bottom: 1px solid var(--amz-border); display: flex; justify-content: space-between; align-items: center; background: #F7F8F8; flex-shrink: 0; }
+        .modal-header h3 { font-size: 16px; }
+        .modal-actions { display: flex; gap: 8px; align-items: center; }
+        .modal-body { overflow-y: auto; flex: 1; }
+        .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-muted); padding: 0 4px; line-height: 1; }
+        .history-empty { padding: 40px; text-align: center; color: var(--text-muted); font-size: 14px; }
+        #milestone-banner { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background: var(--amz-squid-ink); color: white; padding: 15px 25px; border-radius: 8px; transition: bottom 0.5s ease; display: flex; align-items: center; gap: 20px; z-index: 100; }
+        #milestone-banner.show { bottom: 20px; }
+        [data-tooltip] { position: relative; cursor: help; border-bottom: 1px dotted var(--text-muted); }
+        [data-tooltip]:hover::after { content: attr(data-tooltip); position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%); background: var(--amz-squid-ink); color: white; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: normal; white-space: normal; width: 280px; z-index: 50; line-height: 1.4; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        [data-tooltip]:hover::before { content: ''; position: absolute; bottom: 115%; left: 50%; transform: translateX(-50%); border: 6px solid transparent; border-top-color: var(--amz-squid-ink); z-index: 50; }
+
+        /* ── Fix Plan Panel ── */
+        #fix-plan-panel {
+            position: fixed;
+            top: 0; right: -480px;
+            width: 460px;
+            height: 100vh;
+            background: var(--amz-white);
+            border-left: 3px solid #1B2A4A;
+            box-shadow: -4px 0 24px rgba(0,0,0,0.18);
+            z-index: 300;
+            display: flex;
+            flex-direction: column;
+            transition: right 0.32s cubic-bezier(0.4,0,0.2,1);
+            overflow: hidden;
+        }
+        #fix-plan-panel.open { right: 0; }
+        #fix-plan-panel .fp-header {
+            background: #1B2A4A;
+            color: #fff;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        #fix-plan-panel .fp-header h3 { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        #fix-plan-panel .fp-close {
+            background: none; border: 1px solid rgba(255,255,255,0.3);
+            color: #fff; cursor: pointer; border-radius: 4px;
+            padding: 3px 10px; font-size: 13px;
+        }
+        #fix-plan-panel .fp-close:hover { background: rgba(255,255,255,0.1); }
+        #fix-plan-panel .fp-body { overflow-y: auto; flex: 1; padding: 20px; }
+        #fix-plan-panel .fp-empty {
+            color: var(--text-muted); font-size: 13px; text-align: center;
+            margin-top: 60px; line-height: 1.8;
+        }
+        .fp-step {
+            border: 1px solid var(--amz-border);
+            border-radius: 8px;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+        .fp-step-header {
+            display: flex; align-items: flex-start; gap: 12px;
+            padding: 14px 16px;
+            background: #F7F8F8;
+            border-bottom: 1px solid var(--amz-border);
+        }
+        .fp-step-num {
+            background: #1B2A4A; color: #fff;
+            width: 24px; height: 24px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: 700; flex-shrink: 0;
+        }
+        .fp-step-num.sev-FAIL { background: var(--error); }
+        .fp-step-num.sev-WARN { background: var(--warning); }
+        .fp-step-title { font-size: 13px; font-weight: 700; color: var(--text-main); line-height: 1.4; }
+        .fp-step-sev { font-size: 11px; font-weight: 600; margin-top: 2px; }
+        .fp-step-sev.sev-FAIL { color: var(--error); }
+        .fp-step-sev.sev-WARN { color: var(--warning); }
+        .fp-step-body { padding: 14px 16px; font-size: 13px; color: var(--text-main); line-height: 1.6; }
+        .fp-step-body p { margin-bottom: 8px; }
+        .fp-step-body p:last-child { margin-bottom: 0; }
+        .fp-mentor-link {
+            display: inline-flex; align-items: center; gap: 5px;
+            margin-top: 10px;
+            background: rgba(27,42,74,0.07);
+            border: 1px solid rgba(27,42,74,0.2);
+            color: #1B2A4A;
+            padding: 5px 12px; border-radius: 4px;
+            font-size: 12px; font-weight: 600; text-decoration: none;
+        }
+        .fp-mentor-link:hover { background: rgba(27,42,74,0.14); }
+        .fp-mentor-link svg { flex-shrink: 0; }
+        
+        #btn-fix-plan-float {
+            display: none;
+            position: fixed;
+            bottom: 28px; right: 28px;
+            background: #1B2A4A;
+            color: #fff;
+            border: none; border-radius: 28px;
+            padding: 12px 22px;
+            font-size: 13px; font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+            z-index: 200;
+            align-items: center; gap: 8px;
+            transition: background 0.2s, transform 0.15s;
+        }
+        #btn-fix-plan-float:hover { background: #243760; transform: translateY(-1px); }
+        #btn-fix-plan-float.has-issues { background: var(--error); }
+        #btn-fix-plan-float.has-issues:hover { background: #a80a2f; }
+        #fp-panel-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.3); z-index: 299;
+        }
+        #fp-panel-overlay.open { display: block; }
+
+        .bg-ACTION_REQUIRED { background: #fff0e0; color: #B45309; }
+        .bg-HELD            { background: #f0f0f0; color: #6b7280; }
+        .status-badge::before { margin-right: 4px; font-style: normal; }
+        .bg-PASS::before            { content: "✓"; }
+        .bg-FAIL::before            { content: "✗"; }
+        .bg-WARN::before            { content: "!"; }
+        .bg-ACTION_REQUIRED::before { content: "!"; }
+        .bg-HELD::before            { content: "–"; }
+        .bg-NA::before              { content: "–"; }
+
+        .lines-section-wrapper { position: relative; }
+        .lines-section-wrapper.header-failed .pane-content table,
+        .lines-section-wrapper.header-failed .pane-header { opacity: 0.45; pointer-events: none; }
+        .lines-section-wrapper.header-failed::after {
+            content: ""; position: absolute; inset: 0;
+            background: repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(200,200,200,0.06) 10px, rgba(200,200,200,0.06) 20px);
+            border-radius: 8px; pointer-events: none;
+        }
+
+        #header-blocker-alert { display: none; background: #fce8e6; border: 2px solid var(--error); border-radius: 8px; padding: 16px 20px; margin-bottom: 12px; flex-shrink: 0; }
+        #header-blocker-alert.visible { display: flex; gap: 14px; align-items: flex-start; }
+        #header-blocker-alert .blocker-icon { font-size: 22px; flex-shrink: 0; line-height: 1; }
+        #header-blocker-alert .blocker-body { font-size: 13px; line-height: 1.55; }
+        #header-blocker-alert .blocker-body strong { color: var(--error); }
+        #header-blocker-alert .show-lines-btn { margin-top: 10px; display: inline-block; background: none; border: 1px solid var(--error); color: var(--error); padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; }
+        #header-blocker-alert .show-lines-btn:hover { background: #fce8e6; }
+
+        #action-plan-box { display: none; background: #FFF8EC; border: 1px solid var(--warning); border-radius: 6px; padding: 12px 16px; margin-bottom: 10px; font-size: 13px; flex-shrink: 0; }
+        #action-plan-box.visible { display: block; }
+        #action-plan-box h4 { color: var(--warning); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+        #action-plan-box ul { padding-left: 18px; }
+        #action-plan-box li { margin-bottom: 4px; line-height: 1.5; }
+
+        tr.line-held td { color: #9ca3af !important; }
+        tr.line-held .status-badge { background: #f0f0f0 !important; color: #6b7280 !important; }
+
+        /* MENTOR UI OMITTED FROM CSS FOR BREVITY - Assume existing CSS here */
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <svg viewBox="0 0 220 44" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="22" cy="22" r="18" fill="none" stroke="white" stroke-width="3.8"/>
+                <line x1="11" y1="22" x2="33" y2="22" stroke="white" stroke-width="3.8" stroke-linecap="round"/>
+                <circle cx="22" cy="13" r="3.2" fill="white"/>
+                <circle cx="22" cy="31" r="3.2" fill="white"/>
+                <text x="52" y="30" font-family="'Segoe UI', Arial, sans-serif" font-size="22" font-weight="300" fill="white" letter-spacing="4">OBELUS</text>
+            </svg>
+        </div>
+        <div class="header-right">
+            <span id="version-badge" style="color: var(--amz-border); font-size: 12px; margin-right: 10px;">Obelus 2.3XL</span>
+            <button class="btn-history" onclick="location.reload()">Reset / New</button>
+            <button class="btn-history" onclick="openHistory()">History</button>
+            <div class="trust-badge">Privacy Mode: Local Processing Only</div>
+        </div>
+    </header>
+
+    <main>
+        <div id="upload-zone">
+            <h2>Drop SDI XML Invoices Here</h2>
+            <p>Drag files or click to upload. Validates Invoices (TD01) and Credit/Debit Notes (TD04/TD05). Batch pairing enabled.</p>
+            <input type="file" id="file-input" accept=".xml" multiple style="display:none">
+        </div>
+
+        <div id="results-container">
+            <div class="sticky-warning" id="po-asin-warning" style="display:none;">
+                <div class="warn-icon">&#9888;</div>
+                <div class="warn-text">
+                    <strong>Before submitting to SDI:</strong> Manually confirm that the PO number(s) are open and match an active order in Vendor Central, and that all ASIN/EAN codes correspond to products in your active catalog. Obelus cannot verify this automatically — this requires your manual check every time, regardless of whether the invoice passes all other validations.
+                </div>
+            </div>
+
+            <div id="single-view" style="display:none; flex-direction: column; height: 100%; gap: 20px;">
+                <div class="top-panes">
+                    <div class="pane" style="flex: 3;">
+                        <div class="pane-header">
+                            <span>Invoice Compliance Checks</span>
+                        </div>
+                        <div class="pane-content" id="auto-checks"></div>
+                    </div>
+                    <div class="pane" style="flex: 1;">
+                        <div class="pane-header">
+                            <span>Validation Result</span>
+                        </div>
+                        <div class="pane-content" id="manual-actions"></div>
+                    </div>
+                </div>
+                <div class="bottom-pane lines-section-wrapper" id="lines-section-wrapper">
+                    <div id="header-blocker-alert">
+                        <div class="blocker-icon">✗</div>
+                        <div class="blocker-body">
+                            <strong>Resolve header-level errors first.</strong><br>
+                            One or more critical compliance checks have failed at the invoice level. Line items are shown below for reference but are <strong>blocked from submission</strong> until the header issues are resolved.
+                            <br>
+                            <button class="show-lines-btn" id="btn-show-lines">Show line details anyway ↓</button>
+                        </div>
+                    </div>
+
+                    <div id="action-plan-box">
+                        <h4>⚑ Action Plan — resolve these before re-submitting</h4>
+                        <ul id="action-plan-list"></ul>
+                    </div>
+
+                    <div class="pane" style="flex:1; min-height:0;">
+                        <div class="pane-header">
+                            <span>Entry-Level Analysis</span>
+                            <button class="btn-primary" id="btn-pdf-single">&#x2913; Export PDF Report</button>
+                        </div>
+                        <div class="pane-content" style="padding: 0;">
+                            <table class="data-table" id="lines-table">
+                                <thead>
+                                    <tr>
+                                        <th>Entry #</th>
+                                        <th>Line Validity</th>
+                                        <th>Description</th>
+                                        <th>ASIN / EAN / Code</th>
+                                        <th>PO Reference</th>
+                                        <th>VAT Rate</th>
+                                        <th>Discount</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="bulk-view" style="display:none; height: 100%;">
+                <div class="pane">
+                    <div class="pane-header" id="bulk-header">
+                        Batch Summary
+                        <button class="btn-primary" id="btn-csv" style="margin-left: auto;">&#x2913; Export Excel Report (.xlsx)</button>
+                    </div>
+                    <div class="pane-content" style="padding: 0;">
+                        <table class="data-table" id="bulk-table">
+                            <thead>
+                                <tr>
+                                    <th>File</th>
+                                    <th>Invoice #</th>
+                                    <th>DocType</th>
+                                    <th>Original Invoice Referenced</th>
+                                    <th>PO(s)</th>
+                                    <th>ASIN/EAN(s)</th>
+                                    <th>Compliance Result</th>
+                                    <th>Overall</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <button id="btn-fix-plan-float" onclick="openFixPlan()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        Fix Plan
+        <span id="fp-issue-count" style="background:rgba(255,255,255,0.25);border-radius:10px;padding:1px 7px;font-size:11px;margin-left:2px;"></span>
+    </button>
+
+    <div id="fp-panel-overlay" onclick="closeFixPlan()"></div>
+    <div id="fix-plan-panel">
+        <div class="fp-header">
+            <h3>Fix Plan</h3>
+            <button class="fp-close" onclick="closeFixPlan()">✕ Close</button>
+        </div>
+        <div class="fp-body" id="fp-body">
+            <div class="fp-empty">Validate an invoice to generate<br>a personalised fix plan.</div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="history-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Validation History</h3>
+                <div class="modal-actions">
+                    <button class="btn-secondary" onclick="exportHistory()">Export</button>
+                    <button class="btn-secondary" onclick="clearHistory()" style="color: var(--error); border-color: #f5c6cb;">Clear</button>
+                    <button class="modal-close" onclick="closeHistory()">&times;</button>
+                </div>
+            </div>
+            <div class="modal-body" id="history-body"></div>
+        </div>
+    </div>
+
+    <script>
+        // GLOBALS & UTILS
+        let batchData = [];
+        let rawXMLTexts = {};
+        const HISTORY_KEY = 'obelus_history_v23';
+
+        function sanitize(str) {
+            if (str === null || str === undefined) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+        }
+        
+        function formatDateIT(date) {
+            if (!date) date = new Date();
+            if (typeof date === 'string') date = new Date(date);
+            const dd = String(date.getDate()).padStart(2, '0');
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const yyyy = date.getFullYear();
+            const hh = String(date.getHours()).padStart(2, '0');
+            const min = String(date.getMinutes()).padStart(2, '0');
+            return dd + '/' + mm + '/' + yyyy + ' ' + hh + ':' + min;
+        }
+
+        const escapeCSV = val => {
+            if (val === null || val === undefined) return '';
+            const s = String(val);
+            return (s.includes(',') || s.includes('"') || s.includes('\n')) ? '"' + s.replace(/"/g, '""') + '"' : s;
+        };
+
+        const downloadCSV = (content, filename) => {
+            const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = filename;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+        };
+
+        // HISTORY
+        function loadHistory() { try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch(e) { return []; } }
+        function saveToHistory(entries) {
+            const history = loadHistory();
+            const ts = new Date().toISOString();
+            entries.forEach(d => {
+                history.unshift({ checkedAt: ts, fileName: d.fileName, invoiceNum: d.invoiceNum, docType: d.docType, subtype: d.subtype, overallStatus: d.overallStatus, failedChecks: d.headerChecks.filter(c => c.status === 'FAIL').map(c => c.label).join('; ') || 'None' });
+            });
+            try { localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, 500))); } catch (e) {}
+        }
+        function openHistory() {
+            const history = loadHistory();
+            const body = document.getElementById('history-body');
+            if (!history.length) {
+                body.innerHTML = '<div class="history-empty">No validation history yet.</div>';
+            } else {
+                let html = '<table class="data-table"><thead><tr><th>Date</th><th>File</th><th>Invoice #</th><th>DocType / Subtype</th><th>Result</th><th>Issues</th></tr></thead><tbody>';
+                history.forEach(h => {
+                    html += `<tr><td>${formatDateIT(h.checkedAt)}</td><td>${sanitize(h.fileName)}</td><td>${sanitize(h.invoiceNum)}</td><td>${sanitize(h.docType)} <span style="color:var(--amz-blue)">(${sanitize(h.subtype)})</span></td><td><span class="status-badge bg-${h.overallStatus}">${h.overallStatus}</span></td><td>${sanitize(h.failedChecks)}</td></tr>`;
+                });
+                body.innerHTML = html + '</tbody></table>';
+            }
+            document.getElementById('history-modal').classList.add('open');
+        }
+        function closeHistory() { document.getElementById('history-modal').classList.remove('open'); }
+        function clearHistory() { if(confirm('Clear history?')){ localStorage.removeItem(HISTORY_KEY); closeHistory(); } }
+
+        // EXPORT EVENTS
+        document.getElementById('btn-pdf-single').addEventListener('click', () => { if (batchData.length === 1) exportPDF(batchData[0]); });
+        document.getElementById('btn-csv').addEventListener('click', () => { if (batchData.length > 0) exportBatchExcel(batchData); });
+
+        // ─────────────────────────────────────────────────────────────────
+        // UTILITIES
+        // ─────────────────────────────────────────────────────────────────
+        function stripHTML(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/<[^>]*>/g, '')
+                .replace(/&gt;/g, '>').replace(/&lt;/g, '<')
+                .replace(/&amp;/g, '&').replace(/&#039;/g, "'")
+                .replace(/&quot;/g, '"');
+        }
+
+        // ─────────────────────────────────────────────────────────────────
+        // EXCEL EXPORT  (SheetJS — batch view)
+        // Sheet 1 "Summary"  : one row per invoice
+        // Sheet 2 "Check Detail": one row per check/line per invoice
+        // ─────────────────────────────────────────────────────────────────
+        function exportBatchExcel(data) {
+            const wb = XLSX.utils.book_new();
+
+            // ── Sheet 1: Summary ──
+            const summaryHeaders = [
+                'Invoice #', 'File', 'Doc Type', 'Subtype',
+                'Header Status', 'Overall Status', 'Total Amount (€)',
+                'PO(s)', 'ASIN / EAN(s)', 'Linked Doc',
+                '# Critical Fails', '# Warnings', '# Passed'
+            ];
+            const summaryRows = data.map(d => {
+                const hFails  = d.headerChecks.filter(c => c.status === 'FAIL').length;
+                const lFails  = d.lines.filter(l => l.status === 'FAIL').length;
+                const hWarns  = d.headerChecks.filter(c => c.status === 'WARN').length;
+                const lWarns  = d.lines.filter(l => l.status === 'WARN').length;
+                const passes  = d.headerChecks.filter(c => c.status === 'PASS').length
+                              + d.lines.filter(l => l.status === 'PASS').length;
+                return [
+                    d.invoiceNum, d.fileName, d.docType, d.subtype,
+                    d.headerStatus, d.overallStatus, d.totalAmount,
+                    (d.pos  || []).join('; '),
+                    (d.asins|| []).join('; '),
+                    d.linkedDocId || '-',
+                    hFails + lFails, hWarns + lWarns, passes
+                ];
+            });
+            const ws1 = XLSX.utils.aoa_to_sheet([summaryHeaders, ...summaryRows]);
+            ws1['!cols'] = [14,34,10,14,14,14,16,22,32,16,14,12,10].map(w => ({ wch: w }));
+            // Bold header row
+            const summaryRange = XLSX.utils.decode_range(ws1['!ref']);
+            for (let C = summaryRange.s.c; C <= summaryRange.e.c; C++) {
+                const cellAddr = XLSX.utils.encode_cell({ r: 0, c: C });
+                if (ws1[cellAddr]) ws1[cellAddr].s = { font: { bold: true } };
+            }
+            XLSX.utils.book_append_sheet(wb, ws1, 'Summary');
+
+            // ── Sheet 2: Check Detail ──
+            const detailHeaders = [
+                'Invoice #', 'File', 'Doc Type', 'Subtype',
+                'Category', 'Check Name', 'Status', 'Severity', 'Detected Issue'
+            ];
+            const detailRows = [];
+            data.forEach(d => {
+                d.headerChecks.forEach(c => {
+                    if (c.status === 'NA') return;
+                    detailRows.push([
+                        d.invoiceNum, d.fileName, d.docType, d.subtype,
+                        'Header', c.label, c.status,
+                        c.status === 'FAIL' ? 'Critical — blocks submission'
+                            : c.status === 'WARN' ? 'Warning — review before submitting' : 'OK',
+                        c.msg
+                    ]);
+                });
+                // Passed line items — one summary row
+                const passedLines = d.lines.filter(l => l.status === 'PASS');
+                if (passedLines.length > 0) {
+                    detailRows.push([
+                        d.invoiceNum, d.fileName, d.docType, d.subtype,
+                        'Line Items', `${passedLines.length} lines — Product Code`, 'PASS', 'OK',
+                        `${passedLines.length} line(s) have valid product codes.`
+                    ]);
+                }
+                // Failed / warned line items — one row each
+                d.lines.filter(l => l.status === 'FAIL' || l.status === 'WARN').forEach(l => {
+                    detailRows.push([
+                        d.invoiceNum, d.fileName, d.docType, d.subtype,
+                        'Line Item', `Line #${l.lineNum} — Product Code`,
+                        l.status,
+                        l.status === 'FAIL' ? 'Critical — blocks submission' : 'Warning',
+                        `Line #${l.lineNum} (${l.description || 'No description'}): Missing product code (EAN/ASIN). Found: ${(l.productCodes||[]).join(', ') || 'none'}`
+                    ]);
+                });
+            });
+            const ws2 = XLSX.utils.aoa_to_sheet([detailHeaders, ...detailRows]);
+            ws2['!cols'] = [14,34,10,14,12,36,8,30,70].map(w => ({ wch: w }));
+            XLSX.utils.book_append_sheet(wb, ws2, 'Check Detail');
+
+            const filename = `Obelus_Batch_${new Date().toISOString().slice(0,10)}.xlsx`;
+            XLSX.writeFile(wb, filename);
+        }
+
+        // ─────────────────────────────────────────────────────────────────
+        // HISTORY EXPORT  (also uses SheetJS now)
+        // ─────────────────────────────────────────────────────────────────
+        function exportHistory() {
+            const history = loadHistory();
+            if (!history.length) { alert('No history to export.'); return; }
+            const wb = XLSX.utils.book_new();
+            const headers = ['Date', 'File', 'Invoice #', 'Doc Type', 'Subtype', 'Result', 'Failed Checks'];
+            const rows = history.map(h => [formatDateIT(h.checkedAt), h.fileName, h.invoiceNum, h.docType, h.subtype, h.overallStatus, h.failedChecks]);
+            const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+            ws['!cols'] = [18,34,14,10,12,10,60].map(w => ({ wch: w }));
+            XLSX.utils.book_append_sheet(wb, ws, 'Validation History');
+            XLSX.writeFile(wb, `Obelus_History_${new Date().toISOString().slice(0,10)}.xlsx`);
+        }
+
+        // ─────────────────────────────────────────────────────────────────
+        // PDF EXPORT  (jsPDF + autoTable — single invoice view)
+        // ─────────────────────────────────────────────────────────────────
+        function exportPDF(result) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+            const W = 210, margin = 18, contentW = 210 - 18 * 2;
+
+            // Palette (RGB arrays)
+            const navy     = [27,  42,  74 ];
+            const orange   = [255, 153,  0 ];
+            const green    = [6,   125,  98];
+            const red      = [204,  12,  57];
+            const warn     = [231, 118,   0];
+            const lightBg  = [247, 248, 248];
+            const border   = [213, 217, 217];
+            const textMain = [15,   17,  17];
+            const textMuted= [86,   89,  89];
+
+            const overallColor = result.overallStatus === 'PASS' ? green
+                               : result.overallStatus === 'FAIL' ? red : warn;
+
+            let y = 0;
+
+            // ── PAGE HEADER ──────────────────────────────────────────────
+            doc.setFillColor(...navy);
+            doc.rect(0, 0, W, 30, 'F');
+
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(20);
+            doc.setFont('helvetica', 'bold');
+            doc.text('OBELUS', margin, 13);
+
+            doc.setFontSize(8.5);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(180, 200, 220);
+            doc.text('Amazon Invoice Compliance Validator', margin, 20);
+
+            doc.setFontSize(7.5);
+            doc.setTextColor(160, 180, 205);
+            doc.text(`Generated: ${formatDateIT(new Date())}`, W - margin, 13, { align: 'right' });
+            doc.text('Obelus 2.3XL  |  Local Processing Only', W - margin, 20, { align: 'right' });
+
+            // Orange title bar
+            doc.setFillColor(...orange);
+            doc.rect(0, 30, W, 9, 'F');
+            doc.setTextColor(...navy);
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'bold');
+            doc.text('VENDOR ACTION PLAN — INVOICE COMPLIANCE REPORT', W / 2, 36, { align: 'center' });
+
+            y = 46;
+
+            // ── INVOICE SUMMARY CARD ─────────────────────────────────────
+            doc.setFillColor(...lightBg);
+            doc.setDrawColor(...border);
+            doc.roundedRect(margin, y, contentW, 42, 2, 2, 'FD');
+
+            // Status pill
+            doc.setFillColor(...overallColor);
+            doc.roundedRect(margin + 4, y + 4, 38, 11, 1.5, 1.5, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'bold');
+            const statusLabel = result.overallStatus === 'FAIL' ? '✗  FAILED'
+                              : result.overallStatus === 'WARN' ? '!  WARNING' : '✓  PASSED';
+            doc.text(statusLabel, margin + 23, y + 11, { align: 'center' });
+
+            // Summary fields — 2 columns
+            const c1x = margin + 4, c2x = margin + contentW / 2 + 2;
+            let sy = y + 20;
+            const rowH = 6.8;
+
+            function summaryField(label, value, x, cy) {
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(7);
+                doc.setTextColor(...textMuted);
+                doc.text(label + ':', x, cy);
+                const lw = doc.getTextWidth(label + ': ');
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(...textMain);
+                doc.text(String(value || '—'), x + lw, cy);
+            }
+
+            const invoiceType = `${result.docType}${result.subtype !== 'RETAIL' ? `  (${result.subtype})` : ''}`;
+            const asinDisplay = (result.asins || []).slice(0, 4).join(', ')
+                              + ((result.asins || []).length > 4 ? ` +${result.asins.length - 4} more` : '')
+                              || '—';
+            const fileDisplay = result.fileName.length > 38 ? result.fileName.slice(0, 35) + '…' : result.fileName;
+            const poDisplay   = (result.pos || []).join(', ') || '—';
+
+            summaryField('Invoice #',  result.invoiceNum, c1x, sy);
+            summaryField('Type',       invoiceType,       c2x, sy);  sy += rowH;
+            summaryField('File',       fileDisplay,       c1x, sy);
+            summaryField('Amount',    `€ ${result.totalAmount}`, c2x, sy);  sy += rowH;
+            summaryField('PO(s)',      poDisplay,         c1x, sy);
+            summaryField('ASIN/EANs', asinDisplay,       c2x, sy);  sy += rowH;
+            if (result.linkedDocId) summaryField('Linked Doc', result.linkedDocId, c1x, sy);
+
+            y += 48;
+
+            // ── COMPLIANCE CHECKS TABLE ──────────────────────────────────
+            doc.setFontSize(9.5);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(...navy);
+            doc.text('Compliance Check Results', margin, y);
+            y += 5;
+
+            const checkRows = result.headerChecks
+                .filter(c => c.status !== 'NA')
+                .map(c => [c.label, c.status, c.msg]);
+
+            doc.autoTable({
+                startY: y,
+                head: [['Check', 'Result', 'Details']],
+                body: checkRows,
+                margin: { left: margin, right: margin },
+                styles: { fontSize: 7.5, cellPadding: 2.8, textColor: textMain, lineColor: border, lineWidth: 0.2 },
+                headStyles: { fillColor: navy, textColor: [255,255,255], fontStyle: 'bold', fontSize: 7.5 },
+                alternateRowStyles: { fillColor: [250, 250, 252] },
+                columnStyles: {
+                    0: { cellWidth: 46, fontStyle: 'bold' },
+                    1: { cellWidth: 19, halign: 'center', fontStyle: 'bold' },
+                    2: { cellWidth: contentW - 65 }
+                },
+                didParseCell: (data) => {
+                    if (data.column.index === 1 && data.section === 'body') {
+                        const s = data.cell.raw;
+                        data.cell.styles.textColor = s === 'FAIL' ? red : s === 'WARN' ? warn : green;
+                    }
+                }
+            });
+
+            y = doc.lastAutoTable.finalY + 10;
+
+            // ── FIX PLAN STEPS ───────────────────────────────────────────
+            const steps = buildFixPlan(result);
+
+            if (steps.length === 0) {
+                if (y > 255) { doc.addPage(); y = 20; }
+                doc.setFillColor(230, 244, 234);
+                doc.setDrawColor(...green);
+                doc.roundedRect(margin, y, contentW, 20, 2, 2, 'FD');
+                doc.setTextColor(...green);
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'bold');
+                doc.text('✓  No issues to resolve. Invoice passed all checks.', W / 2, y + 13, { align: 'center' });
+                y += 26;
+            } else {
+                if (y > 245) { doc.addPage(); y = 20; }
+                doc.setFontSize(9.5);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(...navy);
+                doc.text(`Action Plan — ${steps.length} issue${steps.length !== 1 ? 's' : ''} to resolve`, margin, y);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(7.5);
+                doc.setTextColor(...textMuted);
+                doc.text('Address each item below before re-submitting to SDI.', margin, y + 5);
+                y += 13;
+
+                steps.forEach(step => {
+                    const stepColor = step.sev === 'FAIL' ? red : warn;
+                    const sevLabel  = step.sev === 'FAIL'
+                        ? 'Critical — blocks submission'
+                        : 'Warning — review before submitting';
+
+                    // Estimate space needed: header ~18 + 3 body rows average ~14 each + gap
+                    if (y > 238) { doc.addPage(); y = 20; }
+
+                    // Step header bar
+                    doc.setFillColor(...stepColor);
+                    doc.roundedRect(margin, y, contentW, 18, 2, 2, 'F');
+
+                    // Step number badge
+                    doc.setFillColor(255, 255, 255);
+                    doc.circle(margin + 10, y + 9, 5, 'F');
+                    doc.setTextColor(...stepColor);
+                    doc.setFontSize(8);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text(String(step.num), margin + 10, y + 11.5, { align: 'center' });
+
+                    // Title + severity
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFontSize(8.5);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text(step.title, margin + 20, y + 8);
+                    doc.setFontSize(7);
+                    doc.setFont('helvetica', 'italic');
+                    doc.setTextColor(255, 240, 220);
+                    doc.text(sevLabel, margin + 20, y + 14.5);
+
+                    y += 20;
+
+                    // Three body rows
+                    const bodyItems = [
+                        { label: 'What we found',        text: stripHTML(step.detected), labelColor: textMuted },
+                        { label: 'Why Amazon rejects',   text: stripHTML(step.what),     labelColor: navy      },
+                        { label: 'How to fix it',        text: stripHTML(step.fix),      labelColor: green     },
+                    ];
+
+                    bodyItems.forEach((item, bi) => {
+                        const wrapped = doc.splitTextToSize(item.text, contentW - 40);
+                        const blockH  = Math.max(11, wrapped.length * 4.6 + 5);
+
+                        if (y + blockH > 272) { doc.addPage(); y = 20; }
+
+                        // Alternating light fill
+                        doc.setFillColor(bi % 2 === 0 ? 252 : 247, bi % 2 === 0 ? 252 : 248, 255);
+                        doc.setDrawColor(...border);
+                        doc.rect(margin, y, contentW, blockH, 'FD');
+
+                        // Coloured left accent
+                        doc.setFillColor(...item.labelColor);
+                        doc.rect(margin, y, 2.5, blockH, 'F');
+
+                        // Label
+                        doc.setFontSize(7);
+                        doc.setFont('helvetica', 'bold');
+                        doc.setTextColor(...item.labelColor);
+                        doc.text(item.label, margin + 5, y + 6);
+
+                        // Text
+                        doc.setFont('helvetica', 'normal');
+                        doc.setTextColor(...textMain);
+                        doc.setFontSize(7.5);
+                        doc.text(wrapped, margin + 37, y + 6);
+
+                        y += blockH;
+                    });
+
+                    y += 7;
+                });
+            }
+
+            // ── LINE ITEM ISSUES ─────────────────────────────────────────
+            const failedLines = result.lines.filter(l => l.status === 'FAIL' || l.status === 'WARN');
+            if (failedLines.length > 0) {
+                if (y > 230) { doc.addPage(); y = 20; }
+                doc.setFontSize(9.5);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(...navy);
+                doc.text('Line Item Issues', margin, y);
+                y += 5;
+
+                doc.autoTable({
+                    startY: y,
+                    head: [['Line #', 'Status', 'Description', 'Product Code', 'VAT']],
+                    body: failedLines.map(l => [
+                        l.lineNum, l.status,
+                        (l.description || '—').slice(0, 55),
+                        (l.productCodes || []).join(', ') || '⚠ MISSING',
+                        (l.vatRate || '—') + '%'
+                    ]),
+                    margin: { left: margin, right: margin },
+                    styles: { fontSize: 7.5, cellPadding: 2.5, textColor: textMain, lineColor: border, lineWidth: 0.2 },
+                    headStyles: { fillColor: navy, textColor: [255,255,255], fontStyle: 'bold' },
+                    columnStyles: {
+                        0: { cellWidth: 12, halign: 'center' },
+                        1: { cellWidth: 16, halign: 'center', fontStyle: 'bold' },
+                        2: { cellWidth: 62 },
+                        3: { cellWidth: 52 },
+                        4: { cellWidth: 14, halign: 'center' }
+                    },
+                    didParseCell: (data) => {
+                        if (data.column.index === 1 && data.section === 'body') {
+                            data.cell.styles.textColor = data.cell.raw === 'FAIL' ? red : warn;
+                        }
+                        if (data.column.index === 3 && data.section === 'body' && String(data.cell.raw).includes('MISSING')) {
+                            data.cell.styles.textColor = red;
+                            data.cell.styles.fontStyle = 'bold';
+                        }
+                    }
+                });
+            }
+
+            // ── FOOTER ON EVERY PAGE ─────────────────────────────────────
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let p = 1; p <= pageCount; p++) {
+                doc.setPage(p);
+                doc.setFillColor(...navy);
+                doc.rect(0, 287, W, 10, 'F');
+                doc.setTextColor(160, 180, 210);
+                doc.setFontSize(6.5);
+                doc.setFont('helvetica', 'normal');
+                doc.text(
+                    'Obelus 2.3XL — Amazon Invoice Compliance Validator — Local Processing Only — Confidential',
+                    W / 2, 293, { align: 'center' }
+                );
+                doc.text(`Page ${p} of ${pageCount}`, W - margin, 293, { align: 'right' });
+            }
+
+            const safeName = (result.invoiceNum || 'UNKNOWN').replace(/[^a-zA-Z0-9_\-]/g, '_');
+            doc.save(`Obelus_Report_${safeName}.pdf`);
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // OBELUS CORE ENGINE (v2.3XL Refactored)
+        // ═══════════════════════════════════════════════════════════════════
+        function validate(xml, fileName) {
+            const getTagText = (parent, tag) => {
+                const el = parent.getElementsByTagName(tag)[0] || parent.getElementsByTagNameNS("*", tag)[0];
+                return el?.textContent?.trim() || "";
+            };
+            const getTags = (parent, tag) => {
+                return Array.from(parent.getElementsByTagName(tag)).concat(Array.from(parent.getElementsByTagNameNS("*", tag)));
+            };
+
+            const docType = getTagText(xml, "TipoDocumento");
+            const invoiceNum = getTagText(xml, "Numero");
+            const totalAmount = getTagText(xml, "ImportoTotaleDocumento");
+
+            // ──────────────────────────────────────────────────
+            // DOCUMENT SUBTYPE CLASSIFICATION (PATCH 2)
+            // ──────────────────────────────────────────────────
+            const causaleNodes = getTags(xml, "Causale");
+            const causaleText = causaleNodes.map(n => n.textContent?.trim() || "").join(" ").toUpperCase();
+            const rifAmmRaw = getTagText(xml, "RiferimentoAmministrazione");
+            const rifAmm = rifAmmRaw.toUpperCase();
+
+            let subtype = "RETAIL"; // default
+            if (docType === "TD04" || docType === "TD05") {
+                if (causaleText.includes("CCOGS") || rifAmm.startsWith("MDF#") || rifAmm.startsWith("MDF #")) {
+                    subtype = "COOP";
+                } else if (/\b(VRET|RMA|RETURN|RFC)\b/.test(rifAmm) || /\b(VRET|RMA|RETURN|RFC)\b/.test(causaleText)) {
+                    subtype = "RETURN";
+                } else if (/\b(PQV|PPV|QPD)\b/.test(causaleText) || /\b(PQV|PPV|QPD)\b/.test(rifAmm)) {
+                    subtype = "PQV";
+                } else {
+                    const allDescriptions = getTags(xml, "Descrizione").map(n => n.textContent?.trim() || "").join(" ").toUpperCase();
+                    if (allDescriptions.includes("ACCRUAL") || allDescriptions.includes("ALLOWANCE") || allDescriptions.includes("MDF") || allDescriptions.includes("COOP") || allDescriptions.includes("CO-OP")) {
+                        subtype = "COOP";
+                    } else {
+                        subtype = "CN_GENERIC"; 
+                    }
+                }
+            }
+
+            const headerChecks = [];
+            headerChecks.push({ label: "XML Structure", status: "PASS", msg: "Read successful" });
+
+            if (!docType) {
+                headerChecks.push({ label: "Document Type", status: "FAIL", msg: "Missing TipoDocumento" });
+            } else {
+                headerChecks.push({ label: "Document Type", status: "PASS", msg: "Found: " + docType });
+            }
+
+            // ──────────────────────────────────────────────────
+            // CAUSALE KEYWORD CHECK (PATCH 3)
+            // ──────────────────────────────────────────────────
+            if (docType === "TD04" || docType === "TD05") {
+                if (subtype === "COOP") {
+                    if (causaleText.includes("CCOGS")) {
+                        headerChecks.push({ label: "Causale Keyword", status: "PASS", msg: 'Causale contains required keyword "CCOGS" for CoOp credit note.' });
+                    } else {
+                        const foundText = causaleNodes.map(n => n.textContent?.trim()).filter(Boolean).join("; ");
+                        headerChecks.push({ label: "Causale Keyword", status: "FAIL", msg: `Causale does not contain "CCOGS". Found: "${foundText || '(empty)'}"` });
+                    }
+                } else if (subtype === "PQV") {
+                    const hasReasonCode = /\b(PQV|PPV|QPD)\b/.test(causaleText);
+                    if (hasReasonCode) {
+                        headerChecks.push({ label: "Causale Keyword", status: "PASS", msg: "Causale contains valid PQV reason code." });
+                    } else {
+                        headerChecks.push({ label: "Causale Keyword", status: "WARN", msg: "PQV credit note detected but no reason code (PQV/PPV/QPD) found in Causale." });
+                    }
+                }
+            }
+
+            // ──────────────────────────────────────────────────
+            // PO CHECK (PATCH 5)
+            // ──────────────────────────────────────────────────
+            const poNodes = getTags(xml, "DatiOrdineAcquisto");
+            const pos = Array.from(new Set(poNodes.map(n => getTagText(n, "IdDocumento")).filter(Boolean)));
+            
+            if (subtype === "COOP") {
+                if (pos.length > 0) {
+                    headerChecks.push({ label: "PO Reference", status: "PASS", msg: "POs: " + pos.join(", ") + " (note: PO is optional for CoOp credit notes)" });
+                } else {
+                    headerChecks.push({ label: "PO Reference", status: "NA", msg: "Not required for CoOp credit notes." });
+                }
+            } else if (pos.length > 0) {
+                headerChecks.push({ label: "PO Reference", status: "PASS", msg: "POs: " + pos.join(", ") });
+            } else {
+                headerChecks.push({
+                    label: "PO Reference",
+                    status: (docType === "TD04" || docType === "TD05") ? "WARN" : "FAIL",
+                    msg: "No Purchase Order found in DatiOrdineAcquisto."
+                });
+            }
+
+            // ──────────────────────────────────────────────────
+            // LINKED DOCUMENTS & RIFERIMENTO AMMINISTRAZIONE (PATCH 4)
+            // ──────────────────────────────────────────────────
+            let linkedDocId = null;
+            if (docType === "TD04" || docType === "TD05") {
+                const linkedNodes = getTags(xml, "DatiFattureCollegate");
+                const linkedIds = Array.from(new Set(linkedNodes.map((n) => getTagText(n, "IdDocumento")).filter(Boolean)));
+                
+                if (linkedIds.length > 0) {
+                    linkedDocId = linkedIds[0]; 
+                    headerChecks.push({ label: "Linked Invoice", status: "PASS", msg: `References linked document(s): ${linkedIds.join(", ")}` });
+                } else {
+                    const linkedMsg = {
+                        COOP: "No DatiFattureCollegate found. For CoOp credit notes, include the debit note number in DatiFattureCollegate > IdDocumento.",
+                        RETURN: "No linked invoice found. Ensure DatiFattureCollegate contains the original invoice number being corrected.",
+                        PQV: "No linked invoice found. Include the disputed invoice number in DatiFattureCollegate > IdDocumento.",
+                        CN_GENERIC: "No linked invoice found. Include the original document reference in DatiFattureCollegate > IdDocumento.",
+                        RETAIL: "No linked invoice found."
+                    };
+                    headerChecks.push({
+                        label: "Linked Invoice",
+                        status: subtype === "COOP" ? "WARN" : "FAIL",
+                        msg: linkedMsg[subtype] || linkedMsg.CN_GENERIC
+                    });
+                }
+
+                if (rifAmmRaw) {
+                    if (subtype === "COOP") {
+                        if (rifAmm.startsWith("MDF#") || rifAmm.startsWith("MDF #")) {
+                            headerChecks.push({ label: "RiferimentoAmministrazione", status: "PASS", msg: `Agreement reference found: ${rifAmmRaw}` });
+                        } else {
+                            headerChecks.push({ label: "RiferimentoAmministrazione", status: "WARN", msg: `RiferimentoAmministrazione contains "${rifAmmRaw}" but expected MDF# prefix for CoOp credit notes.` });
+                        }
+                    } else if (subtype === "RETURN") {
+                        if (/\b(VRET|RMA|RFC)\b/.test(rifAmm) || /\d{10,}/.test(rifAmmRaw)) {
+                            headerChecks.push({ label: "RiferimentoAmministrazione", status: "PASS", msg: `Return reference found: ${rifAmmRaw}` });
+                        } else {
+                            headerChecks.push({ label: "RiferimentoAmministrazione", status: "WARN", msg: `RiferimentoAmministrazione contains "${rifAmmRaw}" but no Return ID pattern (VRET/RMA/RFC) detected.` });
+                        }
+                    } else {
+                        headerChecks.push({ label: "RiferimentoAmministrazione", status: "PASS", msg: `Reference found: ${rifAmmRaw}` });
+                    }
+                } else {
+                    if (subtype === "COOP") {
+                        headerChecks.push({ label: "RiferimentoAmministrazione", status: "FAIL", msg: "Missing RiferimentoAmministrazione. CoOp credit notes require the MDF agreement number here." });
+                    } else if (subtype === "RETURN") {
+                        headerChecks.push({ label: "RiferimentoAmministrazione", status: "FAIL", msg: "Missing RiferimentoAmministrazione. Return credit notes require the Return ID here." });
+                    } else {
+                        headerChecks.push({ label: "RiferimentoAmministrazione", status: "NA", msg: "Not present (Optional for this document type)." });
+                    }
+                }
+            }
+
+            // ──────────────────────────────────────────────────
+            // LINE ITEMS & EAN CHECKS
+            // ──────────────────────────────────────────────────
+            const lineNodes = getTags(xml, "DettaglioLinee");
+            const lines = [];
+            const asins = [];
+
+            lineNodes.forEach((node, i) => {
+                const lineNum = getTagText(node, "NumeroLinea") || String(i + 1);
+                const desc = getTagText(node, "Descrizione");
+                const vat = getTagText(node, "AliquotaIVA");
+                const pCodes = getTags(node, "CodiceArticolo").map(n => getTagText(n, "CodiceValore")).filter(Boolean);
+                asins.push(...pCodes);
+                const sconto = getTagText(node, "ScontoMaggiorazione");
+                
+                // Exempt COOP subtypes from strict product code validations
+                let lineStatus = "PASS";
+                if (subtype !== "COOP") {
+                    lineStatus = pCodes.length ? "PASS" : "FAIL";
+                }
+
+                lines.push({
+                    lineNum,
+                    status: lineStatus,
+                    description: desc,
+                    productCodes: pCodes,
+                    vatRate: vat,
+                    poRef: "-",
+                    discount: sconto ? "Yes" : "No"
+                });
+            });
+
+            if (lines.length === 0) {
+                headerChecks.push({ label: "Line Items", status: "FAIL", msg: "No items (DettaglioLinee) found." });
+            } else {
+                headerChecks.push({ label: "Line Items", status: "PASS", msg: lines.length + " items." });
+            }
+
+            // ──────────────────────────────────────────────────
+            // STATUS AGGREGATION (PATCH 10)
+            // ──────────────────────────────────────────────────
+            const headerStatus = headerChecks.some(c => c.status === "FAIL") 
+                ? "FAIL" 
+                : headerChecks.some(c => c.status === "WARN") 
+                    ? "WARN" 
+                    : "PASS";
+                    
+            const overallStatus = (headerStatus === "FAIL" || lines.some(l => l.status === "FAIL")) 
+                ? "FAIL" 
+                : (headerStatus === "WARN" || lines.some(l => l.status === "WARN" && l.status !== "NA")) 
+                    ? "WARN" 
+                    : "PASS";
+
+            // ──────────────────────────────────────────────────
+            // FINAL RETURN (PATCH 9)
+            // ──────────────────────────────────────────────────
+            return {
+                fileName,
+                invoiceNum: invoiceNum || "UNKNOWN",
+                docType: docType || "UNKNOWN",
+                subtype,
+                totalAmount: totalAmount || "0.00",
+                linkedDocId,
+                headerStatus,
+                overallStatus,
+                pos,
+                asins: Array.from(new Set(asins)),
+                headerChecks,
+                lines
+            };
+        }
+
+        // DRAG AND DROP / FILE PROCESSING
+        document.getElementById('btn-show-lines').addEventListener('click', function() {
+            document.getElementById('lines-section-wrapper').classList.remove('header-failed');
+            document.getElementById('header-blocker-alert').classList.remove('visible');
+        });
+
+        const uploadZone = document.getElementById('upload-zone');
+        const fileInput = document.getElementById('file-input');
+
+        if (uploadZone && fileInput) {
+            uploadZone.onclick = () => fileInput.click();
+            uploadZone.ondragover = (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); };
+            uploadZone.ondragleave = () => { uploadZone.classList.remove('dragover'); };
+            uploadZone.ondrop = (e) => { e.preventDefault(); uploadZone.classList.remove('dragover'); if (e.dataTransfer.files) handleFiles(e.dataTransfer.files); };
+            fileInput.onchange = (e) => { if (e.target.files.length) handleFiles(e.target.files); e.target.value = ''; };
+        }
+
+        async function handleFiles(fileList) {
+            const files = Array.from(fileList).filter(f => f.name.toLowerCase().endsWith('.xml'));
+            if (!files.length) { alert("Please drop valid XML files."); return; }
+
+            rawXMLTexts = {};
+            batchData = await Promise.all(files.map(file => new Promise(resolve => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const rawText = e.target.result;
+                        rawXMLTexts[file.name] = rawText;
+                        const xml = new DOMParser().parseFromString(rawText, "text/xml");
+                        if (xml.querySelector('parsererror')) {
+                            resolve({ fileName: file.name, invoiceNum: 'ERROR', docType: 'N/A', subtype: 'RETAIL', totalAmount: '0', headerStatus: 'FAIL', overallStatus: 'FAIL', headerChecks: [{ label: 'Processing Error', status: 'FAIL', msg: 'File corrupted.' }], lines: [] }); return;
+                        }
+                        resolve(validate(xml, file.name));
+                    } catch (err) {
+                        resolve({ fileName: file.name, invoiceNum: 'ERROR', docType: 'N/A', subtype: 'RETAIL', totalAmount: '0', headerStatus: 'FAIL', overallStatus: 'FAIL', headerChecks: [{ label: 'Processing Error', status: 'FAIL', msg: 'Fatal parsing error.' }], lines: [] });
+                    }
+                };
+                reader.readAsText(file);
+            })));
+            saveToHistory(batchData);
+            renderResults(batchData);
+        }
+
+        function renderResults(results) {
+            document.getElementById('results-container').style.display = 'flex';
+            document.getElementById('single-view').style.display = 'none';
+            document.getElementById('bulk-view').style.display = 'none';
+            document.getElementById('po-asin-warning').style.display = 'flex';
+
+            if (results.length === 1) {
+                document.getElementById('single-view').style.display = 'flex';
+                const r = results[0];
+                const headerFailed = r.headerStatus === 'FAIL';
+
+                let hcHtml = '';
+                r.headerChecks.forEach(hc => {
+                    const icon = hc.status === 'PASS' ? '<span class="PASS">✓</span>' : hc.status === 'FAIL' ? '<span class="FAIL">✗</span>' : hc.status === 'WARN' ? '<span class="WARN">!</span>' : '<span class="NA"></span>';
+                    if (hc.status !== 'NA') {
+                        hcHtml += '<div class="check-item"><div class="icon">' + icon + '</div><div><strong>' + hc.label + ':</strong> ' + sanitize(hc.msg) + '</div></div>';
+                    }
+                });
+                document.getElementById('auto-checks').innerHTML = hcHtml;
+
+                const displayStatus = headerFailed ? 'ACTION_REQUIRED' : r.overallStatus;
+                const displayLabel  = headerFailed ? 'ACTION REQUIRED' : r.overallStatus;
+                let summaryHtml = '<div style="margin-bottom:12px"><span class="status-badge bg-' + displayStatus + '">' + displayLabel + '</span></div>';
+                if (headerFailed) summaryHtml += '<div style="font-size:12px; color:var(--error); margin-bottom:10px;">Header errors are blocking submission. Resolve flagged checks.</div>';
+                
+                // Injecting Subtype visibly into the UI summary
+                summaryHtml += `<div style="font-size:13px; margin-bottom:8px"><strong>Type:</strong> ${sanitize(r.docType)} ${r.subtype !== 'RETAIL' ? `<span style="color:var(--amz-blue);font-weight:600">(${sanitize(r.subtype)})</span>` : ''}</div>`;
+                summaryHtml += '<div style="font-size:13px; margin-bottom:8px"><strong>File:</strong> ' + sanitize(r.fileName) + '</div>';
+                summaryHtml += '<div style="font-size:13px; margin-bottom:8px"><strong>Invoice #:</strong> ' + sanitize(r.invoiceNum) + '</div>';
+                summaryHtml += '<div style="font-size:13px; margin-bottom:8px"><strong>Amounts:</strong> €' + sanitize(r.totalAmount) + '</div>';
+                document.getElementById('manual-actions').innerHTML = summaryHtml;
+
+                const blockerEl = document.getElementById('header-blocker-alert');
+                const actionBox = document.getElementById('action-plan-box');
+                const actionList = document.getElementById('action-plan-list');
+                const wrapper = document.getElementById('lines-section-wrapper');
+
+                if (headerFailed) { blockerEl.classList.add('visible'); wrapper.classList.add('header-failed'); } 
+                else { blockerEl.classList.remove('visible'); wrapper.classList.remove('header-failed'); }
+
+                const failedChecks = r.headerChecks.filter(c => c.status === 'FAIL');
+                const warnChecks = r.headerChecks.filter(c => c.status === 'WARN');
+                if (failedChecks.length || warnChecks.length) {
+                    actionBox.classList.add('visible');
+                    let items = '';
+                    failedChecks.forEach(c => items += '<li><strong style="color:var(--error);">✗ ' + sanitize(c.label) + ':</strong> ' + sanitize(c.msg) + '</li>');
+                    warnChecks.forEach(c => items += '<li><strong style="color:var(--warning);">! ' + sanitize(c.label) + ':</strong> ' + sanitize(c.msg) + '</li>');
+                    actionList.innerHTML = items;
+                } else {
+                    actionBox.classList.remove('visible');
+                }
+
+                let lHtml = '';
+                r.lines.forEach(l => {
+                    let badgeClass, badgeLabel, rowClass = '';
+                    if (headerFailed && l.status === 'PASS') { badgeClass = 'bg-HELD'; badgeLabel = 'VALID (HELD)'; rowClass = 'line-held'; } 
+                    else if (headerFailed && l.status === 'FAIL') { badgeClass = 'bg-FAIL'; badgeLabel = 'INVALID'; rowClass = 'line-held'; } 
+                    else { badgeClass = 'bg-' + l.status; badgeLabel = l.status; }
+                    lHtml += '<tr class="' + rowClass + '"><td>' + sanitize(l.lineNum) + '</td><td><span class="status-badge ' + badgeClass + '">' + badgeLabel + '</span></td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">' + sanitize(l.description) + '</td><td style="font-family:monospace">' + sanitize((l.productCodes||[]).join(", ") || "-") + '</td><td>-</td><td>' + sanitize(l.vatRate) + '%</td><td>' + sanitize(l.discount) + '</td></tr>';
+                });
+                document.querySelector('#lines-table tbody').innerHTML = lHtml;
+
+                renderFixPlan(r);
+
+            } else {
+                document.getElementById('header-blocker-alert').classList.remove('visible');
+                document.getElementById('action-plan-box').classList.remove('visible');
+                document.getElementById('lines-section-wrapper').classList.remove('header-failed');
+                document.getElementById('bulk-view').style.display = 'block';
+                
+                let bHtml = '';
+                results.forEach(r => {
+                    bHtml += `<tr><td style="max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${sanitize(r.fileName)}">${sanitize(r.fileName)}</td>`;
+                    bHtml += `<td style="font-weight:600">${sanitize(r.invoiceNum)}</td>`;
+                    bHtml += `<td>${sanitize(r.docType)} ${r.subtype !== 'RETAIL' ? `<br><small style="color:var(--amz-blue)">${sanitize(r.subtype)}</small>` : ''}</td>`;
+                    bHtml += `<td style="font-family:monospace">${sanitize(r.linkedDocId || "-")}</td>`;
+                    bHtml += `<td style="font-family:monospace">${sanitize((r.pos||[]).join(", ") || "-")}</td>`;
+                    bHtml += `<td style="font-family:monospace">${sanitize((r.asins||[]).join(", ") || "-")}</td>`;
+                    bHtml += `<td><span class="status-badge bg-${r.headerStatus}">${r.headerStatus}</span></td><td><span class="status-badge bg-${r.overallStatus}">${r.overallStatus}</span></td></tr>`;
+                });
+                document.querySelector('#bulk-table tbody').innerHTML = bHtml;
+                renderFixPlan(null);
+            }
+        }
+
+        // ──────────────────────────────────────────────────
+        // FIX PLAN MAP & GENERATOR (PATCH 7 & 8)
+        // ──────────────────────────────────────────────────
+        const lineFailPlan = {
+            key: 'product', title: 'One or More Line Items Missing Product Code (EAN/ASIN)',
+            what: 'Each line item must include a <code>CodiceArticolo</code> block with the product\'s EAN barcode or Amazon ASIN. Lines without this are flagged as invalid.',
+            fix: 'For each flagged line, open the Amazon Purchase Order, copy the EAN (13-digit barcode) or ASIN exactly, and enter it in the product code / codice articolo field for that line in your software.',
+        };
+
+        const fixPlanMap = {
+            'Document Type':  {
+                key: 'invoice', title: 'Missing or Invalid Document Type',
+                what: 'The <code>TipoDocumento</code> field tells SDI what kind of document this is (TD01 = invoice, TD04 = credit note). Without it, the file is unreadable.',
+                fix: 'Open the invoice in your software and ensure the document type is set to <strong>TD01</strong> (standard invoice), <strong>TD04</strong> (credit note), or <strong>TD05</strong> (debit note) before exporting.',
+            },
+            'PO Reference': {
+                key: 'po',
+                title: 'Missing Purchase Order (PO) Reference',
+                subtypeConfig: {
+                    COOP: null, // Never show for CoOp
+                    RETURN: {
+                        what: 'The PO number helps link your credit note to the original shipment and invoice.',
+                        fix: 'Reference the PO from the original invoice being corrected in DatiOrdineAcquisto > IdDocumento.'
+                    },
+                    DEFAULT: {
+                        what: 'The PO number in <code>DatiOrdineAcquisto &gt; IdDocumento</code> links your invoice to Amazon\'s order. Without a valid PO, Amazon cannot match the invoice and payment will not be processed.',
+                        fix: 'Find the 8\u20139 character PO number in Vendor Central under "Orders" (or on your PDF purchase order). Enter it in the PO/Order Reference section of your invoicing software.'
+                    }
+                }
+            },
+            'Linked Invoice': {
+                key: 'credit',
+                title: 'Missing Linked Document Reference',
+                subtypeConfig: {
+                    COOP: {
+                        title: 'Missing Debit Note Reference (DatiFattureCollegate)',
+                        what: 'CoOp credit notes must reference the debit note they are settling in <code>DatiFattureCollegate &gt; IdDocumento</code>. This allows Amazon to automatically match and close the receivable.',
+                        fix: 'In your invoicing software, find the "Linked Documents" or "Fatture Collegate" field and enter the Amazon debit note number (e.g., 58XXXXXXXX) that this credit note is paying.'
+                    },
+                    RETURN: {
+                        title: 'Missing Linked Invoice Reference',
+                        what: 'A return credit note must include a <code>DatiFattureCollegate</code> block pointing to the original invoice being corrected. Without this, Amazon cannot reconcile the reversal.',
+                        fix: 'In your software, find the "Linked Documents" or "Fatture Collegate" field and enter the invoice number of the original invoice. Also ensure RiferimentoAmministrazione contains at least one Return ID (VRET, RMA, or RFC number).'
+                    },
+                    DEFAULT: {
+                        what: 'A TD04 or TD05 must include a <code>DatiFattureCollegate</code> block pointing to the original document it references. Without this, Amazon cannot reconcile it.',
+                        fix: 'In your software, find the "Linked Documents" or "Fatture Collegate" field and enter the document number being referenced.'
+                    }
+                }
+            },
+            'Causale Keyword': {
+                key: 'causale',
+                title: 'Missing or Incorrect Causale Keyword',
+                subtypeConfig: {
+                    COOP: {
+                        title: 'Missing "CCOGS" in Causale Field',
+                        what: 'CoOp credit notes (damage allowances, marketing funds, accruals) must contain the keyword <code>CCOGS</code> in the Causale field (section 2.1.1.11). This keyword tells Amazon\'s system to route the document to the CoOp matching engine. Without it, the credit note cannot be automatically applied against the debit note.',
+                        fix: 'In your invoicing software, find the "Causale" or "Reason/Description" field at the document header level and ensure it contains the text <code>CCOGS</code>. It can appear alongside other text (e.g., "CCOGS - Damage Allowance Q1 2026").'
+                    },
+                    PQV: {
+                        title: 'Missing Reason Code in Causale',
+                        what: 'Price/Quantity variance credit notes should contain a reason code (PQV, PPV, or QPD) in the Causale field to enable automated dispute resolution.',
+                        fix: 'Enter PQV (Price Variance), PPV (Purchase Price Variance), or QPD (Quick Pay Discount) in the Causale or Document Notes field of your software.'
+                    },
+                    DEFAULT: {
+                        what: 'A reason code is missing or incorrect.',
+                        fix: 'Ensure the Causale field is populated correctly based on your document type.'
+                    }
+                }
+            },
+            'RiferimentoAmministrazione': {
+                key: 'po', // Fallback key to closest mentor logic
+                title: 'Missing or Invalid RiferimentoAmministrazione',
+                subtypeConfig: {
+                    COOP: {
+                        title: 'Missing MDF Agreement Number',
+                        what: 'CoOp credit notes must reference the original MDF agreement number in the <code>RiferimentoAmministrazione</code> field. This proves the validity of the deduction.',
+                        fix: 'Enter the MDF agreement number (e.g., MDF#100037895) in the "Riferimento Amministrazione" or "Admin Reference" field in your software.'
+                    },
+                    RETURN: {
+                        title: 'Missing Return ID',
+                        what: 'Return credit notes must reference the Amazon Return ID (VRET, RMA, or RFC number) in the <code>RiferimentoAmministrazione</code> field.',
+                        fix: 'Locate the Return ID on the Amazon return authorization and enter it into the "Riferimento Amministrazione" field.'
+                    },
+                    DEFAULT: {
+                        what: 'The administration reference is missing or invalid.',
+                        fix: 'Ensure the RiferimentoAmministrazione field contains the correct reference for this transaction.'
+                    }
+                }
+            },
+            'Processing Error': {
+                key: null, title: 'File Could Not Be Parsed',
+                what: 'The uploaded file is not valid XML or is corrupted. Obelus could not read any data from it.',
+                fix: 'Re-export the invoice from your software as a FatturaPA XML file. Do not rename or edit the raw XML manually unless you are certain of the format.',
+            }
+        };
+
+        function buildFixPlan(result) {
+            const steps = [];
+            let stepNum = 0;
+            const subtype = result.subtype || "RETAIL";
+
+            result.headerChecks.forEach(c => {
+                if (c.status === 'PASS' || c.status === 'NA') return;
+
+                const planEntry = fixPlanMap[c.label];
+                if (!planEntry) return;
+
+                let config;
+                if (planEntry.subtypeConfig) {
+                    config = planEntry.subtypeConfig[subtype] !== undefined ? planEntry.subtypeConfig[subtype] : planEntry.subtypeConfig.DEFAULT;
+                } else {
+                    config = planEntry;
+                }
+
+                if (!config) return;
+
+                stepNum++;
+                steps.push({
+                    key: planEntry.key,
+                    title: config.title || planEntry.title,
+                    what: config.what,
+                    fix: config.fix,
+                    num: stepNum,
+                    sev: c.status,
+                    detected: c.msg
+                });
+            });
+
+            if (subtype !== "COOP") {
+                const failedLines = result.lines.filter(l => l.status === "FAIL" || l.status === "WARN");
+                if (failedLines.length > 0) {
+                    const lineNums = failedLines.map(l => '#' + l.lineNum).join(', ');
+                    stepNum++;
+                    steps.push({
+                        ...lineFailPlan,
+                        num: stepNum,
+                        sev: 'FAIL',
+                        detected: `Lines ${lineNums} have no product code (EAN/ASIN).`
+                    });
+                }
+            }
+
+            return steps;
+        }
+
+        function renderFixPlan(result) {
+            const body = document.getElementById('fp-body');
+            const floatBtn = document.getElementById('btn-fix-plan-float');
+            const countBadge = document.getElementById('fp-issue-count');
+
+            if (!result) {
+                body.innerHTML = '<div class="fp-empty">Validate an invoice to generate<br>a personalised fix plan.</div>';
+                floatBtn.style.display = 'none'; return;
+            }
+
+            const steps = buildFixPlan(result);
+            floatBtn.style.display = 'flex';
+            
+            const failCount = steps.filter(s => s.sev === 'FAIL').length;
+            const warnCount = steps.filter(s => s.sev === 'WARN').length;
+
+            if (failCount > 0) {
+                floatBtn.classList.add('has-issues'); countBadge.textContent = failCount + ' issue' + (failCount > 1 ? 's' : '');
+            } else if (warnCount > 0) {
+                floatBtn.classList.remove('has-issues'); floatBtn.style.background = '#E77600'; countBadge.textContent = warnCount + ' warning' + (warnCount > 1 ? 's' : '');
+            } else {
+                floatBtn.classList.remove('has-issues'); floatBtn.style.background = '#067D62'; countBadge.textContent = '✓ All clear';
+            }
+
+            if (steps.length === 0) {
+                body.innerHTML = `<div style="text-align:center; padding: 40px 20px;"><div style="font-size:36px; margin-bottom:12px;">✓</div><div style="font-weight:700; font-size:15px; color:#067D62; margin-bottom:8px;">No issues to fix!</div><div style="font-size:13px; color:var(--text-muted); line-height:1.6;">Invoice <strong>${sanitize(result.invoiceNum)}</strong> passed all checks.</div></div>`;
+                return;
+            }
+
+            let html = `<div style="font-size:12px; color:var(--text-muted); margin-bottom:16px; line-height:1.5;"><strong>Invoice:</strong> ${sanitize(result.invoiceNum)} &nbsp;|&nbsp; <strong>${steps.length}</strong> item${steps.length > 1 ? 's' : ''} to resolve.</div>`;
+
+            steps.forEach(s => {
+                const mentorLink = s.key ? `<a class="fp-mentor-link" href="#" onclick="event.preventDefault();"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg> Open in Mentor →</a>` : '';
+                html += `<div class="fp-step"><div class="fp-step-header"><div class="fp-step-num sev-${s.sev}">${s.num}</div><div><div class="fp-step-title">${s.title}</div><div class="fp-step-sev sev-${s.sev}">${s.sev === 'FAIL' ? '✗ Critical — blocks submission' : '! Warning — review before submitting'}</div></div></div><div class="fp-step-body"><p><strong>Detected:</strong> ${sanitize(s.detected)}</p><p><strong>Why it matters:</strong> ${s.what}</p><p><strong>How to fix it:</strong> ${s.fix}</p>${mentorLink}</div></div>`;
+            });
+            body.innerHTML = html;
+        }
+
+        function openFixPlan()  { document.getElementById('fix-plan-panel').classList.add('open'); document.getElementById('fp-panel-overlay').classList.add('open'); }
+        function closeFixPlan() { document.getElementById('fix-plan-panel').classList.remove('open'); document.getElementById('fp-panel-overlay').classList.remove('open'); }
+    </script>
+</body>
+</html>
